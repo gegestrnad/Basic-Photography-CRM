@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f13">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>Tasks — Photography Tracker</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>Tasks</h1>
+      <span class="subtitle" id="taskCount"></span>
+      <a href="settings.html" class="icon-btn" style="font-size:1.3rem" aria-label="Settings">⚙️</a>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs"></div>
+    <div id="taskList"></div>
+  </div>
+
+  <button class="fab" onclick="openTaskForm()">+</button>
+
+  <!-- Task Form Modal -->
+  <div class="modal-overlay" id="taskFormModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 id="taskFormTitle">New Task</h2>
+        <button class="icon-btn" onclick="closeTaskForm()">✕</button>
+      </div>
+      <form id="taskForm" onsubmit="saveTask(event)">
+        <div class="form-group">
+          <label class="form-label">Job</label>
+          <select class="form-select" id="tf_jobId" onchange="onTaskJobSelected()"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Client *</label>
+          <input class="form-input" id="tf_client" required>
+          <div class="form-error" id="e_tf_client">Client is required</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Task *</label>
+          <input class="form-input" id="tf_task" placeholder="Task description" required>
+          <div class="form-error" id="e_tf_task">Task description is required</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Due Date *</label>
+            <input class="form-input" type="date" id="tf_dueDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="tf_status"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" id="tf_notes" placeholder="Optional notes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeTaskForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Detail Modal -->
+  <div class="modal-overlay" id="taskDetailModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 id="taskDetailTitle"></h2>
+        <div>
+          <button class="icon-btn" id="taskDetailEditBtn" onclick="editCurrentTask()" title="Edit">✏️</button>
+          <button class="icon-btn" id="taskDetailDeleteBtn" onclick="promptDeleteTask(window._currentTaskId)" title="Delete">🗑️</button>
+          <button class="icon-btn" onclick="closeTaskDetail()">✕</button>
+        </div>
+      </div>
+      <div id="taskDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <p id="confirmMsg">Delete this task?</p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+        <button class="btn btn-danger" onclick="executeDeleteTask()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    <a href="jobs.html" class="nav-item"><span class="nav-icon">📋</span><span>Jobs</span></a>
+    <a href="payments.html" class="nav-item"><span class="nav-icon">💰</span><span>Payments</span></a>
+    <a href="tasks.html" class="nav-item active"><span class="nav-icon">✅</span><span>Tasks</span></a>
+    <a href="wages.html" class="nav-item"><span class="nav-icon">💲</span><span>Wages</span></a>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="back-handler.js"></script>
+  <script>
+    (function() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+
+      var activeFilter = 'all';
+      var pendingDeleteId = null;
+      var formDirty = false;
+      var editingTaskId = null;
+
+      var filters = [
+        { id: 'all', label: 'All' },
+        { id: 'open', label: 'Open' },
+        { id: 'done', label: 'Done' }
+      ];
+
+      function matches(task, filterId) {
+        var upper = (task.status || '').toUpperCase();
+        switch (filterId) {
+          case 'open': return upper !== 'DONE' && upper !== 'CANCELLED';
+          case 'all':  return true;
+          case 'done': return upper === 'DONE' || upper === 'CANCELLED';
+          default:     return true;
+        }
+      }
+
+      function render() {
+        // Tabs
+        var tabContainer = document.getElementById('filterTabs');
+        tabContainer.innerHTML = '';
+        filters.forEach(function(f) {
+          var btn = document.createElement('button');
+          btn.className = 'filter-tab' + (f.id === activeFilter ? ' active' : '');
+          btn.textContent = f.label;
+          btn.onclick = function() { activeFilter = f.id; render(); };
+          tabContainer.appendChild(btn);
+        });
+
+        var tasks = DataStore.getTasks();
+        var filtered = tasks.filter(function(t) { return matches(t, activeFilter); });
+        filtered.sort(function(a, b) { return (a.dueDate || 99999) - (b.dueDate || 99999); });
+
+        document.getElementById('taskCount').textContent = filtered.length + ' task' + (filtered.length !== 1 ? 's' : '');
+
+        var list = document.getElementById('taskList');
+        list.innerHTML = '';
+
+        if (filtered.length === 0) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No tasks in this filter</div></div>';
+          return;
+        }
+
+        filtered.forEach(function(task, idx) {
+          var card = document.createElement('div');
+          card.className = 'entry-card';
+          card.onclick = function() { openTaskDetail(task); };
+
+          // Due date styling
+          var dueStr = formatDateRelative(task.dueDate);
+          var dueClass = 'text-muted';
+          if (task.dueDate) {
+            var today = new Date(); today.setHours(0,0,0,0);
+            var d = excelDateToJS(task.dueDate);
+            if (d) {
+              d.setHours(0,0,0,0);
+              var diff = Math.round((d - today) / 86400000);
+              if (diff < 0 && (task.status||'').toUpperCase() !== 'DONE') dueClass = 'text-red';
+              else if (diff === 0 && (task.status||'').toUpperCase() !== 'DONE') dueClass = 'text-amber';
+            }
+          }
+
+          // Status cycle
+          var nextStatus = cycleStatus(task.status);
+
+          card.innerHTML =
+            '<div class="entry-card-top">' +
+              '<div>' +
+                '<div class="entry-card-client">' + escHtml(task.task) + '</div>' +
+                '<div class="entry-card-job">' + escHtml(task.client) + (task.jobId ? ' · ' + task.jobId : '') + '</div>' +
+              '</div>' +
+              '<span class="badge ' + taskStatusClass(task.status) + '" style="cursor:pointer" onclick="event.stopPropagation();cycleTaskStatus(\'' + task.id + '\')">' + task.status + '</span>' +
+            '</div>' +
+            '<div class="entry-card-details">' +
+              '<span><span class="detail-icon">📅</span><span class="' + dueClass + '">' + dueStr + '</span></span>' +
+              (task.notes ? '<span><span class="detail-icon">📝</span>' + escHtml(task.notes) + '</span>' : '') +
+              '<span style="margin-left:auto;color:var(--text3);font-size:0.75rem" onclick="event.stopPropagation();promptDeleteTask(\'' + task.id + '\')">🗑️</span>' +
+            '</div>';
+
+          list.appendChild(card);
+        });
+      }
+
+      function cycleStatus(current) {
+        var order = ['OPEN', 'IN PROGRESS', 'WAITING', 'DONE'];
+        var idx = order.indexOf((current || '').toUpperCase());
+        if (idx === -1 || idx >= order.length - 1) return order[0];
+        return order[idx + 1];
+      }
+
+      window.cycleTaskStatus = function(taskId) {
+        var task = DataStore.getTasks().find(function(t) { return t.id === taskId; });
+        if (!task) return;
+        var next = cycleStatus(task.status);
+        DataStore.updateTask(taskId, { status: next });
+        showToast('Task status: ' + next);
+        render();
+      };
+
+      // ── Task Detail Modal ──
+      window.openTaskDetail = function(task) {
+        window._currentTaskId = task.id;
+        document.getElementById('taskDetailTitle').textContent = task.task;
+        var body = document.getElementById('taskDetailBody');
+        body.innerHTML =
+          '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border)"><span style="width:80px;color:var(--text3)">ID</span><span>' + task.id + '</span></div>' +
+          '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border)"><span style="width:80px;color:var(--text3)">Client</span><span>' + escHtml(task.client) + '</span></div>' +
+          '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border)"><span style="width:80px;color:var(--text3)">Job</span><span>' + (task.jobId ? task.jobId : '—') + '</span></div>' +
+          '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border)"><span style="width:80px;color:var(--text3)">Due</span><span>' + formatDate(task.dueDate) + '</span></div>' +
+          '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border)"><span style="width:80px;color:var(--text3)">Status</span><span class="badge ' + taskStatusClass(task.status) + '">' + task.status + '</span></div>' +
+          (task.notes ? '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border)"><span style="width:80px;color:var(--text3)">Notes</span><span>' + escHtml(task.notes) + '</span></div>' : '');
+        document.getElementById('taskDetailModal').classList.add('open');
+      };
+
+      window.closeTaskDetail = function() {
+        document.getElementById('taskDetailModal').classList.remove('open');
+        window._currentTaskId = null;
+      };
+      document.getElementById('taskDetailModal').onclick = function(e) { if (e.target === this) closeTaskDetail(); };
+
+      window.editCurrentTask = function() {
+        var taskId = window._currentTaskId;
+        if (!taskId) return;
+        closeTaskDetail();
+        var tasks = DataStore.getTasks();
+        var task = tasks.find(function(t) { return t.id === taskId; });
+        if (task) openTaskForm(task);
+      };
+
+      // ── Task Form ──
+      window.openTaskForm = function(task) {
+        editingTaskId = task ? task.id : null;
+        document.getElementById('taskFormTitle').textContent = task ? 'Edit Task' : 'New Task';
+        var lists = DataStore.getLists();
+        populateSelect('tf_status', lists.taskStatuses, task ? task.status : 'OPEN');
+
+        // Populate job dropdown
+        var jobs = DataStore.getJobs();
+        var sel = document.getElementById('tf_jobId');
+        sel.innerHTML = '<option value="">— None (standalone) —</option>';
+        jobs.forEach(function(j) {
+          var opt = document.createElement('option');
+          opt.value = j.id;
+          opt.textContent = j.id + ' — ' + j.client + ' (' + j.jobType + ')';
+          sel.appendChild(opt);
+        });
+
+        if (task) {
+          document.getElementById('tf_jobId').value = task.jobId || '';
+          if (task.jobId) onTaskJobSelected();
+          document.getElementById('tf_client').value = task.client || '';
+          document.getElementById('tf_task').value = task.task || '';
+          document.getElementById('tf_dueDate').value = excelToDateInput(task.dueDate);
+          document.getElementById('tf_notes').value = task.notes || '';
+        } else {
+          document.getElementById('tf_client').value = '';
+          document.getElementById('tf_task').value = '';
+          document.getElementById('tf_dueDate').value = '';
+          document.getElementById('tf_notes').value = '';
+        }
+        clearErrorsTask();
+        formDirty = false;
+        document.querySelectorAll('#taskForm input, #taskForm select, #taskForm textarea').forEach(function(el) {
+          el.addEventListener('input', function() { formDirty = true; });
+          el.addEventListener('change', function() { formDirty = true; });
+        });
+        document.getElementById('taskFormModal').classList.add('open');
+      };
+
+      window.closeTaskForm = function() {
+        if (formDirty && !confirm('Discard unsaved changes?')) return;
+        document.getElementById('taskFormModal').classList.remove('open');
+        formDirty = false;
+      };
+      document.getElementById('taskFormModal').onclick = function(e) { if (e.target === this) closeTaskForm(); };
+
+      window.onTaskJobSelected = function() {
+        var jobId = document.getElementById('tf_jobId').value;
+        if (jobId) {
+          var job = DataStore.getJob(jobId);
+          if (job) document.getElementById('tf_client').value = job.client;
+        }
+      };
+
+      window.saveTask = function(e) {
+        e.preventDefault();
+        var client = document.getElementById('tf_client').value.trim();
+        var taskName = document.getElementById('tf_task').value.trim();
+        if (!client) {
+          document.getElementById('e_tf_client').classList.add('visible');
+          document.getElementById('tf_client').classList.add('error');
+          return;
+        }
+        if (!taskName) {
+          document.getElementById('e_tf_task').classList.add('visible');
+          document.getElementById('tf_task').classList.add('error');
+          return;
+        }
+        clearErrorsTask();
+
+        var data = {
+          jobId: document.getElementById('tf_jobId').value,
+          client: client,
+          task: taskName,
+          dueDate: dateToExcel(document.getElementById('tf_dueDate').value),
+          status: document.getElementById('tf_status').value,
+          notes: document.getElementById('tf_notes').value.trim()
+        };
+
+        if (editingTaskId) {
+          DataStore.updateTask(editingTaskId, data);
+          showToast('Task updated');
+        } else {
+          DataStore.addTask(data);
+          showToast('Task added');
+        }
+        formDirty = false;
+        editingTaskId = null;
+        closeTaskForm();
+        render();
+      };
+
+      // ── Delete Task ──
+      window.promptDeleteTask = function(taskId) {
+        var t = DataStore.getTasks().find(function(f) { return f.id === taskId; });
+        if (!t) return;
+        pendingDeleteId = t.id;
+        document.getElementById('confirmMsg').textContent = 'Delete task "' + t.task + '"?';
+        document.getElementById('confirmOverlay').classList.add('open');
+      };
+
+      window.closeConfirm = function() { document.getElementById('confirmOverlay').classList.remove('open'); pendingDeleteId = null; };
+
+      window.executeDeleteTask = function() {
+        if (!pendingDeleteId) return;
+        DataStore.deleteTask(pendingDeleteId);
+        closeConfirm();
+        showToast('Task deleted');
+        render();
+      };
+
+      function clearErrorsTask() {
+        document.querySelectorAll('.form-error').forEach(function(el) { el.classList.remove('visible'); });
+        document.querySelectorAll('.form-input.error').forEach(function(el) { el.classList.remove('error'); });
+      }
+
+      document.getElementById('tf_client').oninput = function() { this.classList.remove('error'); document.getElementById('e_tf_client').classList.remove('visible'); };
+      document.getElementById('tf_task').oninput = function() { this.classList.remove('error'); document.getElementById('e_tf_task').classList.remove('visible'); };
+
+      function populateSelect(id, options, selected) {
+        var sel = document.getElementById(id);
+        sel.innerHTML = '';
+        options.forEach(function(o) {
+          var opt = document.createElement('option');
+          opt.value = o; opt.textContent = o;
+          if (o === selected) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

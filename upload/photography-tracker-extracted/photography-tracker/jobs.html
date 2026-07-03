@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f13">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>Jobs — Photography Tracker</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>Jobs</h1>
+      <span class="subtitle" id="jobCount"></span>
+      <a href="settings.html" class="icon-btn" style="font-size:1.3rem" aria-label="Settings">⚙️</a>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs"></div>
+    <div style="margin-bottom:12px">
+      <input class="form-input" id="jobSearch" type="search" placeholder="🔍 Search jobs by client, type, or location..." oninput="render()">
+    </div>
+    <div id="jobList"></div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fabAdd" onclick="openJobForm()">+</button>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 id="modalTitle"></h2>
+        <div>
+          <button class="icon-btn" onclick="editCurrentJob()" title="Edit">✏️</button>
+          <button class="icon-btn" onclick="confirmDeleteJob()" title="Delete">🗑️</button>
+          <button class="icon-btn" onclick="closeModal()">✕</button>
+        </div>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Job Form Modal -->
+  <div class="modal-overlay" id="jobFormModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 id="formTitle">New Job</h2>
+        <button class="icon-btn" onclick="closeJobForm()">✕</button>
+      </div>
+      <form id="jobForm" onsubmit="saveJob(event)">
+        <input type="hidden" id="jobFormId" value="">
+        <div class="form-group">
+          <label class="form-label">Client *</label>
+          <input class="form-input" id="f_client" placeholder="Client name" required>
+          <div class="form-error" id="e_client">Client name is required</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input class="form-input" id="f_phone" placeholder="Phone number">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Job Type *</label>
+            <select class="form-select" id="f_jobType" required></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Job Date *</label>
+            <input class="form-input" type="date" id="f_jobDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status *</label>
+            <select class="form-select" id="f_status" required></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input class="form-input" id="f_location" placeholder="Location">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Total Fee *</label>
+            <input class="form-input" type="number" id="f_totalFee" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deposit</label>
+            <input class="form-input" type="number" id="f_deposit" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Balance</label>
+          <div class="form-static" id="f_balanceDisplay">Rp0</div>
+          <input type="hidden" id="f_balance" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Status</label>
+          <select class="form-select" id="f_paymentStatus"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Photographer(s)</label>
+            <input class="form-input" id="f_photographers" placeholder="e.g. Gege, Sude">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Editor(s)</label>
+            <input class="form-input" id="f_editors" placeholder="e.g. Gege">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Client Source</label>
+          <select class="form-select" id="f_clientSource"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" id="f_notes" placeholder="Additional notes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeJobForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="formSubmitBtn">Save Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Overlay -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <p id="confirmMsg">Delete this job?</p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+        <button class="btn btn-danger" onclick="executeDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    <a href="jobs.html" class="nav-item active"><span class="nav-icon">📋</span><span>Jobs</span></a>
+    <a href="payments.html" class="nav-item"><span class="nav-icon">💰</span><span>Payments</span></a>
+    <a href="tasks.html" class="nav-item"><span class="nav-icon">✅</span><span>Tasks</span></a>
+    <a href="wages.html" class="nav-item"><span class="nav-icon">💲</span><span>Wages</span></a>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script src="back-handler.js"></script>
+  <script>
+    (function() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+
+      var activeFilter = 'all';
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('filter') === 'editing') activeFilter = 'editing';
+
+      var pendingDeleteId = null;
+      var currentJobId = null;
+      var formDirty = false;
+
+      var filters = [
+        { id: 'all', label: 'All' },
+        { id: 'active', label: 'Active' },
+        { id: 'editing', label: 'Editing' },
+        { id: 'done', label: 'Done / Cancelled' }
+      ];
+
+      function matches(job, filterId) {
+        switch (filterId) {
+          case 'all': return true;
+          case 'active': return job.status !== 'Completed' && job.status !== 'Cancelled';
+          case 'editing': return job.status === 'Editing';
+          case 'done': return job.status === 'Completed' || job.status === 'Cancelled';
+          default: return true;
+        }
+      }
+
+      function render() {
+        // Tabs
+        var tabContainer = document.getElementById('filterTabs');
+        tabContainer.innerHTML = '';
+        filters.forEach(function(f) {
+          var btn = document.createElement('button');
+          btn.className = 'filter-tab' + (f.id === activeFilter ? ' active' : '');
+          btn.textContent = f.label;
+          btn.onclick = function() { activeFilter = f.id; render(); };
+          tabContainer.appendChild(btn);
+        });
+
+        var jobs = DataStore.getJobs();
+        var filtered = jobs.filter(function(j) { return matches(j, activeFilter); });
+        var searchQuery = (document.getElementById('jobSearch').value || '').toLowerCase().trim();
+        if (searchQuery) {
+          filtered = filtered.filter(function(j) {
+            return (j.client && j.client.toLowerCase().indexOf(searchQuery) !== -1) ||
+                   (j.jobType && j.jobType.toLowerCase().indexOf(searchQuery) !== -1) ||
+                   (j.location && j.location.toLowerCase().indexOf(searchQuery) !== -1) ||
+                   (j.photographers && j.photographers.toLowerCase().indexOf(searchQuery) !== -1) ||
+                   (j.editors && j.editors.toLowerCase().indexOf(searchQuery) !== -1) ||
+                   (j.id && j.id.toLowerCase().indexOf(searchQuery) !== -1);
+          });
+        }
+        document.getElementById('jobCount').textContent = filtered.length + ' job' + (filtered.length !== 1 ? 's' : '');
+
+        var list = document.getElementById('jobList');
+        list.innerHTML = '';
+
+        if (filtered.length === 0) {
+          list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No jobs in this filter</div></div>';
+          return;
+        }
+
+        filtered.forEach(function(job) {
+          var card = document.createElement('div');
+          card.className = 'entry-card';
+          card.onclick = function() { openDetail(job); };
+          card.innerHTML =
+            '<div class="entry-card-top">' +
+              '<div><div class="entry-card-client">' + escHtml(job.client) + '</div><div class="entry-card-job">' + escHtml(job.jobType) + ' · ' + formatDate(job.jobDate) + '</div></div>' +
+              '<span class="badge ' + jobStatusClass(job.status) + '">' + job.status + '</span>' +
+            '</div>' +
+            '<div class="entry-card-details">' +
+              (job.location ? '<span><span class="detail-icon">📍</span>' + escHtml(job.location) + '</span>' : '') +
+              '<span><span class="detail-icon">💰</span>' + formatCurrency(job.totalFee) + '</span>' +
+              '<span><span class="detail-icon">🏷️</span><span class="badge ' + paymentStatusClass(job.paymentStatus) + '" style="font-size:0.68rem">' + job.paymentStatus + '</span></span>' +
+            '</div>';
+          list.appendChild(card);
+        });
+      }
+
+      // ── Detail Modal ──
+      window.openDetail = function(job) {
+        currentJobId = job.id;
+        document.getElementById('modalTitle').textContent = job.client;
+        var body = document.getElementById('modalBody');
+        body.innerHTML =
+          '<div class="modal-section"><div class="modal-section-title">Job Info</div>' +
+            fld('Job ID', job.id) +
+            fld('Type', job.jobType) +
+            fld('Date', formatDate(job.jobDate)) +
+            fld('Location', job.location || '—') +
+            fld('Status', '<span class="badge ' + jobStatusClass(job.status) + '">' + job.status + '</span>') +
+            fld('Client Source', job.clientSource || '—') +
+          '</div>' +
+          '<div class="modal-section"><div class="modal-section-title">Financial</div>' +
+            fld('Total Fee', formatCurrency(job.totalFee)) +
+            fld('Deposit', formatCurrency(job.deposit)) +
+            fld('Balance', formatCurrency(job.balance)) +
+            fld('Payment Status', '<span class="badge ' + paymentStatusClass(job.paymentStatus) + '">' + job.paymentStatus + '</span>') +
+          '</div>' +
+          '<div class="modal-section"><div class="modal-section-title">Team</div>' +
+            fld('Photographer(s)', job.photographers || '—') +
+            fld('Editor(s)', job.editors || '—') +
+          '</div>';
+
+        if (job.notes) {
+          body.innerHTML += '<div class="modal-section"><div class="modal-section-title">Notes</div><p style="font-size:0.88rem;color:var(--text2);line-height:1.6">' + escHtml(job.notes) + '</p></div>';
+        }
+
+        var relatedPays = DataStore.getPaymentsByJob(job.id);
+        if (relatedPays.length > 0) {
+          body.innerHTML += '<div class="modal-section"><div class="modal-section-title">Payments (' + relatedPays.length + ')</div>';
+          relatedPays.forEach(function(p) {
+            body.innerHTML += '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.04)"><span>' + formatDate(p.paymentDate) + ' · ' + p.method + '</span><span style="font-weight:500">' + formatCurrency(p.amount) + '</span></div>';
+          });
+          body.innerHTML += '</div>';
+        }
+
+        var relatedTasks = DataStore.getTasksByJob(job.id);
+        if (relatedTasks.length > 0) {
+          body.innerHTML += '<div class="modal-section"><div class="modal-section-title">Tasks (' + relatedTasks.length + ')</div>';
+          relatedTasks.forEach(function(t) {
+            body.innerHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.04)"><div><div>' + escHtml(t.task) + '</div><div class="text-xs text-muted">Due ' + formatDate(t.dueDate) + '</div></div><span class="badge ' + taskStatusClass(t.status) + '">' + t.status + '</span></div>';
+          });
+          body.innerHTML += '</div>';
+        }
+
+        document.getElementById('detailModal').classList.add('open');
+      };
+
+      window.closeModal = function() {
+        document.getElementById('detailModal').classList.remove('open');
+        currentJobId = null;
+      };
+      document.getElementById('detailModal').onclick = function(e) { if (e.target === this) closeModal(); };
+
+      window.editCurrentJob = function() {
+        if (!currentJobId) return;
+        var job = DataStore.getJob(currentJobId);
+        closeModal();
+        if (job) openJobForm(job);
+      };
+
+      // ── Confirm Delete ──
+      window.confirmDeleteJob = function() {
+        if (!currentJobId) return;
+        pendingDeleteId = currentJobId;
+        document.getElementById('confirmMsg').textContent = 'Delete "' + DataStore.getJob(currentJobId).client + '"? This will also remove related payments and tasks.';
+        document.getElementById('confirmOverlay').classList.add('open');
+      };
+
+      window.closeConfirm = function() { document.getElementById('confirmOverlay').classList.remove('open'); pendingDeleteId = null; };
+
+      window.executeDelete = function() {
+        if (!pendingDeleteId) return;
+        DataStore.deleteJob(pendingDeleteId);
+        closeConfirm();
+        closeModal();
+        showToast('Job deleted');
+        render();
+      };
+
+      // ── Job Form (Add/Edit) ──
+      var editingJobId = null;
+
+      window.openJobForm = function(job) {
+        editingJobId = job ? job.id : null;
+        document.getElementById('formTitle').textContent = job ? 'Edit Job' : 'New Job';
+        document.getElementById('formSubmitBtn').textContent = job ? 'Update Job' : 'Save Job';
+
+        // Populate dropdowns
+        var lists = DataStore.getLists();
+        populateSelect('f_jobType', lists.jobTypes, job ? job.jobType : 'Wedding');
+        populateSelect('f_status', lists.jobStatuses, job ? job.status : 'Inquiry');
+        populateSelect('f_paymentStatus', lists.paymentStatuses, job ? job.paymentStatus : 'UNPAID');
+        populateSelect('f_clientSource', lists.clientSources, job ? job.clientSource : '');
+
+        document.getElementById('jobFormId').value = job ? job.id : '';
+        document.getElementById('f_client').value = job ? job.client : '';
+        document.getElementById('f_phone').value = job ? (job.phone || '') : '';
+        document.getElementById('f_jobDate').value = job ? excelToDateInput(job.jobDate) : '';
+        document.getElementById('f_location').value = job ? (job.location || '') : '';
+        document.getElementById('f_totalFee').value = job ? job.totalFee : '';
+        document.getElementById('f_deposit').value = job ? (job.deposit || 0) : 0;
+        document.getElementById('f_photographers').value = job ? (job.photographers || '') : '';
+        document.getElementById('f_editors').value = job ? (job.editors || '') : '';
+        document.getElementById('f_notes').value = job ? (job.notes || '') : '';
+        updateBalanceDisplay();
+        clearErrors();
+        formDirty = false;
+        document.querySelectorAll('#jobForm input, #jobForm select, #jobForm textarea').forEach(function(el) {
+          el.addEventListener('input', function() { formDirty = true; });
+          el.addEventListener('change', function() { formDirty = true; });
+        });
+        document.getElementById('jobFormModal').classList.add('open');
+      };
+
+      window.closeJobForm = function() {
+        if (formDirty && !confirm('Discard unsaved changes?')) return;
+        document.getElementById('jobFormModal').classList.remove('open');
+        editingJobId = null;
+        formDirty = false;
+      };
+      document.getElementById('jobFormModal').onclick = function(e) { if (e.target === this) closeJobForm(); };
+
+      // Auto-calculate balance
+      document.getElementById('f_totalFee').oninput = updateBalanceDisplay;
+      document.getElementById('f_deposit').oninput = updateBalanceDisplay;
+
+      function updateBalanceDisplay() {
+        var fee = parseFloat(document.getElementById('f_totalFee').value) || 0;
+        var dep = parseFloat(document.getElementById('f_deposit').value) || 0;
+        var bal = fee - dep;
+        document.getElementById('f_balanceDisplay').textContent = formatCurrency(bal);
+        document.getElementById('f_balance').value = bal;
+      }
+
+      window.saveJob = function(e) {
+        e.preventDefault();
+        var client = document.getElementById('f_client').value.trim();
+        if (!client || client.length < 2) {
+          document.getElementById('e_client').classList.add('visible');
+          document.getElementById('f_client').classList.add('error');
+          return;
+        }
+        clearErrors();
+
+        var data = {
+          client: client,
+          phone: document.getElementById('f_phone').value.trim(),
+          jobType: document.getElementById('f_jobType').value,
+          jobDate: dateToExcel(document.getElementById('f_jobDate').value),
+          location: document.getElementById('f_location').value.trim(),
+          status: document.getElementById('f_status').value,
+          paymentStatus: document.getElementById('f_paymentStatus').value,
+          totalFee: parseFloat(document.getElementById('f_totalFee').value) || 0,
+          deposit: parseFloat(document.getElementById('f_deposit').value) || 0,
+          balance: parseFloat(document.getElementById('f_balance').value) || 0,
+          photographers: document.getElementById('f_photographers').value.trim(),
+          editors: document.getElementById('f_editors').value.trim(),
+          clientSource: document.getElementById('f_clientSource').value,
+          notes: document.getElementById('f_notes').value.trim()
+        };
+        // If source is empty, clear it
+        if (!data.clientSource) data.clientSource = '';
+
+        if (editingJobId) {
+          DataStore.updateJob(editingJobId, data);
+          showToast('Job updated');
+        } else {
+          DataStore.addJob(data);
+          showToast('Job added');
+        }
+
+        formDirty = false;
+        closeJobForm();
+        render();
+      };
+
+      // Helper to fix form validation UX
+      document.getElementById('f_client').oninput = function() {
+        this.classList.remove('error');
+        document.getElementById('e_client').classList.remove('visible');
+      };
+
+      function clearErrors() {
+        document.querySelectorAll('.form-error').forEach(function(el) { el.classList.remove('visible'); });
+        document.querySelectorAll('.form-input.error').forEach(function(el) { el.classList.remove('error'); });
+      }
+
+      function populateSelect(id, options, selected) {
+        var sel = document.getElementById(id);
+        sel.innerHTML = '';
+        // Add empty option
+        var opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '— Select —';
+        sel.appendChild(opt);
+        options.forEach(function(o) {
+          var opt = document.createElement('option');
+          opt.value = o; opt.textContent = o;
+          if (o === selected) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+
+      function fld(label, value) {
+        return '<div class="modal-field"><span class="field-label">' + label + '</span><span class="field-value">' + value + '</span></div>';
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

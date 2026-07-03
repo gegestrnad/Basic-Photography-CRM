@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f0f13">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>Settings — Photography Tracker</title>
+  <link rel="stylesheet" href="shared.css">
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <div class="page" id="app">
+    <div class="page-header">
+      <a href="dashboard.html" class="icon-btn" aria-label="Back">←</a>
+      <h1>Settings</h1>
+      <span class="subtitle" style="width:36px"></span>
+    </div>
+
+    <!-- Data Backup & Restore -->
+    <div class="section-title">Data Backup & Restore</div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Local File Backup</div>
+      </div>
+      <div class="card-subtitle">Traditional download/upload — works offline</div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="downloadBackup()">
+          📤 Download Backup
+        </button>
+        <button class="btn btn-secondary" onclick="document.getElementById('localImportInput').click()">
+          📥 Import Backup
+        </button>
+      </div>
+      <input type="file" id="localImportInput" accept=".json" style="display:none" onchange="handleLocalImport(event)">
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Cloud Backup (Share to Drive, OneDrive, Dropbox…)</div>
+      </div>
+      <div class="card-subtitle">Saves to Downloads, then opens Android share sheet — pick Google Drive, OneDrive, Dropbox, etc.</div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="shareBackupToCloud()">
+          ☁️ Share Backup to Cloud…
+        </button>
+        <button class="btn btn-secondary" onclick="document.getElementById('cloudImportInput').click()">
+          📥 Load from Cloud/Files…
+        </button>
+      </div>
+      <input type="file" id="cloudImportInput" accept=".json" style="display:none" onchange="handleCloudImport(event)">
+      <p class="text-xs text-muted mt-8">Share uses Android's native share sheet. Load picks from Downloads/Drive/Files app.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Export to Excel / CSV (for Google Sheets)</div>
+      </div>
+      <div class="card-subtitle">Creates a multi-sheet Excel file — open in Excel, Google Sheets, LibreOffice</div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="exportToExcel()">
+          📊 Export to Excel (.xlsx)
+        </button>
+        <button class="btn btn-secondary" onclick="exportToCSV()">
+          📄 Export to CSV (separate files)
+        </button>
+      </div>
+      <p class="text-xs text-muted mt-8">For Google Sheets: export Excel → open Google Sheets → File → Import → Upload the .xlsx</p>
+    </div>
+
+    <!-- Google Sheets Sync -->
+    <div class="section-title">Google Sheets Sync</div>
+
+    <div class="card" id="syncCard">
+      <div class="card-header">
+        <div class="card-title">Sync with Google Sheets</div>
+        <span id="syncStatusBadge" class="badge" style="font-size:11px;padding:2px 8px"></span>
+      </div>
+      <div class="card-subtitle">Push data to a live Google Sheet — readable by anyone you share the sheet with.</div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Apps Script Web App URL</label>
+        <input type="url" id="syncUrl" class="form-input"
+               placeholder="https://script.google.com/macros/s/…/exec"
+               style="font-size:12px">
+        <p class="text-xs text-muted mt-4">Paste the URL from: Extensions &rsaquo; Apps Script &rsaquo; Deploy &rsaquo; Web app</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Secret Token (optional)</label>
+        <input type="password" id="syncToken" class="form-input" placeholder="Leave blank if you skipped AUTH_TOKEN">
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <input type="checkbox" id="syncAuto" style="width:18px;height:18px;cursor:pointer">
+        <label for="syncAuto" style="cursor:pointer;font-size:14px">Auto-sync after every change</label>
+      </div>
+      <p class="text-xs text-muted mt-4" style="margin-bottom:12px">When enabled, every save silently pushes to Sheets in the background.</p>
+
+      <div class="form-actions">
+        <button class="btn btn-primary"   onclick="syncSaveConfig()">Save Config</button>
+        <button class="btn btn-secondary" onclick="syncPushNow()">Push Now</button>
+        <button class="btn btn-secondary" onclick="syncPullNow()">Pull from Sheet</button>
+      </div>
+      <p class="text-xs text-muted mt-8" id="syncLastStatus"></p>
+    </div>
+
+    <div class="card" style="background:var(--surface-2,#1a1a24);border-left:3px solid #4a90d9">
+      <div class="card-title" style="font-size:13px;margin-bottom:8px">Setup Guide</div>
+      <ol style="font-size:12px;color:var(--text-2,#aaa);line-height:1.8;padding-left:16px;margin:0">
+        <li>Open (or create) a Google Sheet</li>
+        <li>Click <strong>Extensions &rsaquo; Apps Script</strong></li>
+        <li>Paste the contents of <code>google-apps-script.js</code> into Code.gs &mdash; replace everything</li>
+        <li>Click <strong>Deploy &rsaquo; New deployment &rsaquo; Web app</strong></li>
+        <li>Set <em>Execute as</em>: <strong>Me</strong> and <em>Who has access</em>: <strong>Anyone</strong></li>
+        <li>Copy the Web App URL and paste it above</li>
+        <li>Click <strong>Save Config</strong>, then <strong>Push Now</strong> to test</li>
+      </ol>
+    </div>
+
+    <div class="section-title">Wage Settings</div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Distributable Ratio</div>
+      </div>
+      <div class="card-subtitle">What portion of total payment goes to wage distribution (matching Excel's 1,000,000 / 1,600,000 = 0.625)</div>
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Ratio (0.0 – 1.0)</label>
+        <input type="number" id="wageRatioInput" class="form-input" min="0" max="1" step="0.005" value="0.625">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Wage Roles &amp; Percentages</div>
+      </div>
+      <div class="card-subtitle">The role split percentages — total of all roles must equal 100% (1.0)</div>
+      <div id="wageRulesContainer" style="margin-top:12px"></div>
+      <div class="form-actions" style="margin-top:8px">
+        <button class="btn btn-secondary" onclick="addWageRuleRow()">➕ Add Role</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Staff → Role Assignments</div>
+      </div>
+      <div class="card-subtitle">Assign which wage roles each staff member qualifies for</div>
+      <div id="staffRolesContainer" style="margin-top:12px"></div>
+    </div>
+
+    <div class="form-actions" style="margin-bottom:16px">
+      <button class="btn btn-primary" onclick="saveWageSettings()">💾 Save Wage Settings</button>
+    </div>
+
+    <div class="section-title">App Info</div>
+    <div class="card">
+      <div class="card-row">
+        <span class="label">Version</span>
+        <span class="value">1.0.0</span>
+      </div>
+      <div class="card-row">
+        <span class="label">Storage</span>
+        <span class="value" id="storageInfo">Calculating…</span>
+      </div>
+      <div class="card-row">
+        <span class="label">Data Entries</span>
+        <span class="value" id="dataCount">—</span>
+      </div>
+    </div>
+
+    <div class="section-title">Danger Zone</div>
+    <div class="card">
+      <button class="btn btn-danger" style="width:100%" onclick="confirmClearAll()">
+        🗑️ Clear All Data
+      </button>
+      <p class="text-xs text-muted mt-8">Permanently deletes all jobs, payments, tasks, and settings. Cannot be undone.</p>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="cloud-sync.js"></script>
+  <script>
+    (function() {
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+
+      // Update storage info
+      function updateInfo() {
+        var jobs = DataStore.getJobs();
+        var pays = DataStore.getPayments();
+        var tasks = DataStore.getTasks();
+        var lists = DataStore.getLists();
+        var total = jobs.length + pays.length + tasks.length;
+        document.getElementById('dataCount').textContent =
+          jobs.length + ' jobs, ' + pays.length + ' payments, ' + tasks.length + ' tasks';
+
+        // Estimate localStorage size
+        try {
+          var data = JSON.stringify({
+            jobs: jobs, payments: pays, tasks: tasks, lists: lists
+          });
+          var kb = (data.length / 1024).toFixed(1);
+          document.getElementById('storageInfo').textContent = kb + ' KB';
+        } catch(e) {
+          document.getElementById('storageInfo').textContent = 'Unknown';
+        }
+      }
+
+      // Local file backup (existing behavior)
+      function downloadBackup() {
+        var data = DataStore.exportData();
+        var blob = new Blob([data], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'photography-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Backup downloaded');
+      }
+
+      window.handleLocalImport = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (!confirm('Import will REPLACE all current data. Continue?')) {
+          e.target.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            DataStore.importData(ev.target.result);
+            showToast('Data imported successfully');
+            setTimeout(function() { location.reload(); }, 800);
+          } catch(err) {
+            showToast('Import failed: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      };
+
+      // Cloud Backup via Web Share API (works in WebView/APK)
+      async function shareBackupToCloud() {
+        var data = DataStore.exportData();
+        var blob = new Blob([data], { type: 'application/json' });
+        var fileName = 'photography-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        var file = new File([blob], fileName, { type: 'application/json' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'Photography Tracker Backup',
+              text: 'Backup exported on ' + new Date().toLocaleDateString(),
+              files: [file]
+            });
+            showToast('✅ Shared — pick Google Drive, OneDrive, etc.');
+          } catch(err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share failed:', err);
+              showToast('Share failed: ' + err.message);
+            }
+          }
+        } else {
+          // Fallback: download to Downloads folder
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast('⚠️ Share not supported — saved to Downloads instead');
+        }
+      }
+
+      window.handleCloudImport = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (!confirm('Load will REPLACE all current data. Continue?')) {
+          e.target.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          try {
+            DataStore.importData(ev.target.result);
+            showToast('✅ Data loaded from cloud');
+            setTimeout(function() { location.reload(); }, 800);
+          } catch(err) {
+            showToast('Load failed: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      };
+
+      // Excel / CSV Export
+      function exportToExcel() {
+        try {
+          var jobs = DataStore.getJobs();
+          var pays = DataStore.getPayments();
+          var tasks = DataStore.getTasks();
+          var lists = DataStore.getLists();
+
+          var wb = XLSX.utils.book_new();
+
+          // Jobs sheet
+          var jobsData = jobs.map(function(j) {
+            return {
+              'Job ID': j.id,
+              'Client': j.clientName,
+              'Event Date': j.eventDate ? excelDate(j.eventDate) : '',
+              'Event Type': j.eventType,
+              'Location': j.location,
+              'Status': j.status,
+              'Package': j.packageName,
+              'Package Price': j.packagePrice,
+              'Add-ons Total': j.addonsTotal || 0,
+              'Total Price': (j.packagePrice || 0) + (j.addonsTotal || 0),
+              'Deposit Paid': j.depositPaid || 0,
+              'Balance Due': ((j.packagePrice || 0) + (j.addonsTotal || 0)) - (j.depositPaid || 0),
+              'Created': j.createdAt ? excelDate(j.createdAt) : '',
+              'Notes': j.notes || ''
+            };
+          });
+          var wsJobs = XLSX.utils.json_to_sheet(jobsData);
+          XLSX.utils.book_append_sheet(wb, wsJobs, 'Jobs');
+
+          // Payments sheet
+          var paysData = pays.map(function(p) {
+            var job = jobs.find(function(j) { return j.id === p.jobId; });
+            return {
+              'Payment ID': p.id,
+              'Job ID': p.jobId,
+              'Client': job ? job.clientName : '',
+              'Date': p.date ? excelDate(p.date) : '',
+              'Amount': p.amount,
+              'Method': p.method,
+              'Notes': p.notes || ''
+            };
+          });
+          var wsPays = XLSX.utils.json_to_sheet(paysData);
+          XLSX.utils.book_append_sheet(wb, wsPays, 'Payments');
+
+          // Tasks sheet
+          var tasksData = tasks.map(function(t) {
+            var job = jobs.find(function(j) { return j.id === t.jobId; });
+            return {
+              'Task ID': t.id,
+              'Job ID': t.jobId,
+              'Client': job ? job.clientName : '',
+              'Title': t.title,
+              'Status': t.done ? 'Done' : 'Pending',
+              'Due Date': t.dueDate ? excelDate(t.dueDate) : '',
+              'Created': t.createdAt ? excelDate(t.createdAt) : ''
+            };
+          });
+          var wsTasks = XLSX.utils.json_to_sheet(tasksData);
+          XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
+
+          // Lists sheet (reference data)
+          var listsData = {
+            'Event Types': lists.eventTypes || [],
+            'Package Names': lists.packageNames || [],
+            'Payment Methods': lists.paymentMethods || [],
+            'Task Templates': (lists.taskTemplates || []).map(function(t) { return t.title; }),
+            'Statuses': lists.statuses || []
+          };
+          var listsRows = [];
+          Object.keys(listsData).forEach(function(key) {
+            listsData[key].forEach(function(val, i) {
+              if (!listsRows[i]) listsRows[i] = {};
+              listsRows[i][key] = val;
+            });
+          });
+          var wsLists = XLSX.utils.json_to_sheet(listsRows);
+          XLSX.utils.book_append_sheet(wb, wsLists, 'Reference Lists');
+
+          // Wage Distributions sheet
+          var wds = DataStore.getWageDistributions();
+          if (wds.length > 0) {
+            var wdData = [];
+            wds.forEach(function(w) {
+              var job = jobs.find(function(j) { return j.id === w.jobId; });
+              if (w.breakdown && w.breakdown.length > 0) {
+                w.breakdown.forEach(function(b) {
+                  wdData.push({
+                    'WD ID': w.id,
+                    'Job ID': w.jobId,
+                    'Client': job ? job.clientName : '',
+                    'Date': w.created ? excelDate(w.created) : '',
+                    'Total Paid': w.totalPaid || 0,
+                    'Dist. Base': w.distributableBase || 0,
+                    'Staff': b.staffName || '',
+                    'Roles': (b.roles || []).join(', '),
+                    'Percentage': Math.round((b.percentage || 0) * 100) + '%',
+                    'Amount': b.amount || 0
+                  });
+                });
+              } else {
+                wdData.push({
+                  'WD ID': w.id,
+                  'Job ID': w.jobId,
+                  'Client': job ? job.clientName : '',
+                  'Date': w.created ? excelDate(w.created) : '',
+                  'Total Paid': w.totalPaid || 0,
+                  'Dist. Base': w.distributableBase || 0,
+                  'Staff': '', 'Roles': '', 'Percentage': '', 'Amount': ''
+                });
+              }
+            });
+            var wsWds = XLSX.utils.json_to_sheet(wdData);
+            XLSX.utils.book_append_sheet(wb, wsWds, 'Wage Distributions');
+          }
+
+          // Set column widths
+          ['Jobs', 'Payments', 'Tasks', 'Reference Lists', 'Wage Distributions'].forEach(function(name) {
+            var ws = wb.Sheets[name];
+            if (ws) {
+              var range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+              var cols = [];
+              for (var c = range.s.c; c <= range.e.c; c++) {
+                var cellAddr = XLSX.utils.encode_cell({ r: 0, c: c });
+                var cell = ws[cellAddr];
+                var width = cell && cell.v ? String(cell.v).length + 4 : 12;
+                cols.push({ wch: Math.min(Math.max(width, 10), 40) });
+              }
+              ws['!cols'] = cols;
+            }
+          });
+
+          var fileName = 'photography-tracker-' + new Date().toISOString().split('T')[0] + '.xlsx';
+          XLSX.writeFile(wb, fileName);
+          showToast('✅ Excel exported: ' + fileName);
+        } catch(err) {
+          console.error('Excel export error:', err);
+          showToast('Export failed: ' + err.message);
+        }
+      }
+
+      function exportToCSV() {
+        try {
+          var jobs = DataStore.getJobs();
+          var pays = DataStore.getPayments();
+          var tasks = DataStore.getTasks();
+
+          var datasets = [
+            { name: 'jobs', data: jobs.map(function(j) { return {
+              'Job ID': j.id, 'Client': j.clientName, 'Event Date': j.eventDate ? excelDate(j.eventDate) : '',
+              'Event Type': j.eventType, 'Location': j.location, 'Status': j.status,
+              'Package': j.packageName, 'Package Price': j.packagePrice, 'Add-ons Total': j.addonsTotal || 0,
+              'Total Price': (j.packagePrice || 0) + (j.addonsTotal || 0),
+              'Deposit Paid': j.depositPaid || 0,
+              'Balance Due': ((j.packagePrice || 0) + (j.addonsTotal || 0)) - (j.depositPaid || 0),
+              'Created': j.createdAt ? excelDate(j.createdAt) : '', 'Notes': j.notes || ''
+            }; }) },
+            { name: 'payments', data: pays.map(function(p) {
+              var job = jobs.find(function(j) { return j.id === p.jobId; });
+              return {
+                'Payment ID': p.id, 'Job ID': p.jobId, 'Client': job ? job.clientName : '',
+                'Date': p.date ? excelDate(p.date) : '', 'Amount': p.amount,
+                'Method': p.method, 'Notes': p.notes || ''
+              };
+            }) },
+            { name: 'tasks', data: tasks.map(function(t) {
+              var job = jobs.find(function(j) { return j.id === t.jobId; });
+              return {
+                'Task ID': t.id, 'Job ID': t.jobId, 'Client': job ? job.clientName : '',
+                'Title': t.title, 'Status': t.done ? 'Done' : 'Pending',
+                'Due Date': t.dueDate ? excelDate(t.dueDate) : '',
+                'Created': t.createdAt ? excelDate(t.createdAt) : ''
+              };
+            }) }
+          ];
+
+          datasets.forEach(function(ds) {
+            var ws = XLSX.utils.json_to_sheet(ds.data);
+            var csv = XLSX.utils.sheet_to_csv(ws);
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'photography-' + ds.name + '-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+          });
+          showToast('✅ CSVs exported (jobs, payments, tasks)');
+        } catch(err) {
+          console.error('CSV export error:', err);
+          showToast('CSV export failed: ' + err.message);
+        }
+      }
+
+      // Helper: convert Excel serial date to YYYY-MM-DD
+      function excelDate(serial) {
+        if (!serial) return '';
+        var d = new Date(Math.round((serial - 25569) * 86400 * 1000));
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+
+      // Danger zone
+      function confirmClearAll() {
+        if (confirm('⚠️ PERMANENTLY delete ALL data?\n\nThis cannot be undone.')) {
+          if (confirm('Type "DELETE" to confirm:')) {
+            var input = prompt('Type DELETE to confirm:');
+            if (input === 'DELETE') {
+              localStorage.clear();
+              showToast('All data cleared');
+              setTimeout(function() { location.reload(); }, 800);
+            }
+          }
+        }
+      }
+
+      // ── Google Sheets Sync UI ──────────────────────────────────
+
+      function syncLoadConfig() {
+        document.getElementById('syncUrl').value   = CloudSync.getUrl();
+        document.getElementById('syncToken').value = CloudSync.getToken();
+        document.getElementById('syncAuto').checked = CloudSync.isAutoSync();
+        syncRefreshStatus();
+      }
+
+      function syncRefreshStatus() {
+        var s = CloudSync.getLastStatus();
+        var badge = document.getElementById('syncStatusBadge');
+        var label = document.getElementById('syncLastStatus');
+        if (!s) {
+          badge.textContent = 'Not synced';
+          badge.style.background = '#555';
+          badge.style.color = '#ccc';
+          label.textContent = '';
+          return;
+        }
+        if (s.ok) {
+          badge.textContent = 'Synced';
+          badge.style.background = '#1a6e3c';
+          badge.style.color = '#7fffb0';
+        } else {
+          badge.textContent = 'Error';
+          badge.style.background = '#6e1a1a';
+          badge.style.color = '#ffb0b0';
+        }
+        label.textContent = s.message + ' (' + new Date(s.time).toLocaleString() + ')';
+      }
+
+      window.syncSaveConfig = function() {
+        var url   = document.getElementById('syncUrl').value.trim();
+        var token = document.getElementById('syncToken').value.trim();
+        var auto  = document.getElementById('syncAuto').checked;
+        if (url && !url.startsWith('https://script.google.com/')) {
+          showToast('URL does not look like a Google Apps Script URL');
+          return;
+        }
+        CloudSync.saveConfig(url, token, auto);
+        showToast(url ? 'Sync config saved' : 'Sync config cleared');
+        syncRefreshStatus();
+      };
+
+      window.syncPushNow = function() {
+        if (!CloudSync.isConfigured()) {
+          showToast('Enter and save a Script URL first');
+          return;
+        }
+        showToast('Pushing to Google Sheets...');
+        CloudSync.push(function(ok, msg) {
+          showToast(ok ? 'Pushed to Sheets' : 'Push failed: ' + msg);
+          syncRefreshStatus();
+        });
+      };
+
+      window.syncPullNow = function() {
+        if (!CloudSync.isConfigured()) {
+          showToast('Enter and save a Script URL first');
+          return;
+        }
+        if (!confirm('Pull will REPLACE local data with data from Google Sheets. Continue?')) return;
+        showToast('Pulling from Google Sheets...');
+        CloudSync.pull(function(ok, msg) {
+          showToast(ok ? 'Data loaded from Sheets' : 'Pull failed: ' + msg);
+          syncRefreshStatus();
+          if (ok) setTimeout(function() { location.reload(); }, 1000);
+        });
+      };
+
+      syncLoadConfig();
+
+      // ── End Sync UI ──
+
+      // ── Wage Settings UI ──
+
+      function renderWageSettings() {
+        var rules = DataStore.getWageRules();
+        var config = DataStore.getWageConfig();
+        var staff = DataStore.getLists().staff || [];
+
+        // Ratio
+        document.getElementById('wageRatioInput').value = config.distributableRatio || 0.625;
+
+        // Rules
+        renderWageRules(rules);
+        renderStaffRoles(staff, rules);
+      }
+
+      function renderWageRules(rules) {
+        var container = document.getElementById('wageRulesContainer');
+        var rulesArr = rules || [];
+        var html = '';
+        var totalPct = 0;
+
+        rulesArr.forEach(function(r, i) {
+          var pct = Math.round(r.percentage * 100);
+          totalPct += pct;
+          html +=
+            '<div class="form-row" style="margin-bottom:8px;align-items:center">' +
+              '<div class="form-group" style="margin-bottom:0;flex:3">' +
+                '<input type="text" class="form-input rule-name" value="' + escHtml(r.role) + '" placeholder="Role name" data-idx="' + i + '">' +
+              '</div>' +
+              '<div class="form-group" style="margin-bottom:0;flex:1;margin-left:6px">' +
+                '<input type="number" class="form-input rule-pct" value="' + pct + '" min="0" max="100" step="1" data-idx="' + i + '" style="text-align:center">' +
+              '</div>' +
+              '<button class="icon-btn" onclick="removeWageRule(' + i + ')" style="flex-shrink:0" title="Remove">✕</button>' +
+            '</div>';
+        });
+
+        html += '<div class="wage-info-row"><span class="wage-info-label">Total</span><span class="wage-info-value" style="color:' + (totalPct === 100 ? 'var(--green)' : 'var(--red)') + '">' + totalPct + '%</span></div>';
+        container.innerHTML = html;
+      }
+
+      window.addWageRuleRow = function() {
+        var rules = DataStore.getWageRules();
+        rules.push({ role: '', percentage: 0 });
+        renderWageRules(rules);
+      };
+
+      window.removeWageRule = function(idx) {
+        var rules = DataStore.getWageRules();
+        rules.splice(idx, 1);
+        renderWageRules(rules);
+      };
+
+      function renderStaffRoles(staff, rules) {
+        var container = document.getElementById('staffRolesContainer');
+        var staffArr = staff || [];
+        var rulesArr = rules || [];
+        var roleNames = rulesArr.map(function(r) { return r.role; }).filter(function(n) { return n.trim(); });
+
+        if (roleNames.length === 0) {
+          container.innerHTML = '<div class="wage-info-row"><span class="wage-info-label" style="color:var(--text3)">Add some wage roles first</span></div>';
+          return;
+        }
+
+        if (staffArr.length === 0) {
+          container.innerHTML = '<div class="wage-info-row"><span class="wage-info-label" style="color:var(--text3)">No staff defined</span></div>';
+          return;
+        }
+
+        var html = '';
+        staffArr.forEach(function(s, si) {
+          var staffRoles = s.roles || [];
+          html +=
+            '<div style="margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm)">' +
+              '<div style="font-weight:600;font-size:0.88rem;margin-bottom:6px">' + escHtml(s.name) + ' <span class="text-muted text-xs">(' + escHtml(s.role || '') + ')</span></div>' +
+              '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+          roleNames.forEach(function(role) {
+            var checked = staffRoles.indexOf(role) !== -1;
+            html +=
+              '<label style="display:flex;align-items:center;gap:4px;font-size:0.82rem;cursor:pointer;padding:4px 8px;background:' + (checked ? 'var(--accent)' : 'var(--surface3)') + ';border-radius:16px;color:' + (checked ? '#fff' : 'var(--text2)') + ';transition:all 0.1s">' +
+                '<input type="checkbox" class="staff-role-cb" data-staff="' + s.name + '" data-role="' + role + '" ' + (checked ? 'checked' : '') + ' style="display:none" onchange="toggleStaffRoleBadge(this)">' +
+                '<span>' + role + '</span>' +
+              '</label>';
+          });
+          html += '</div></div>';
+        });
+
+        container.innerHTML = html;
+      }
+
+      window.toggleStaffRoleBadge = function(cb) {
+        // Toggle label background
+        var label = cb.parentElement;
+        if (cb.checked) {
+          label.style.background = 'var(--accent)';
+          label.style.color = '#fff';
+        } else {
+          label.style.background = 'var(--surface3)';
+          label.style.color = 'var(--text2)';
+        }
+      };
+
+      window.saveWageSettings = function() {
+        // Rules
+        var ruleNameInputs = document.querySelectorAll('.rule-name');
+        var rulePctInputs = document.querySelectorAll('.rule-pct');
+        var rules = [];
+        var valid = true;
+
+        for (var i = 0; i < ruleNameInputs.length; i++) {
+          var name = ruleNameInputs[i].value.trim();
+          var pct = parseFloat(rulePctInputs[i].value);
+          if (!name || isNaN(pct) || pct <= 0) continue;
+          rules.push({ role: name, percentage: pct / 100 });
+        }
+
+        var totalPct = rules.reduce(function(sum, r) { return sum + Math.round(r.percentage * 100); }, 0);
+        if (totalPct !== 100) {
+          if (!confirm('Role percentages total ' + totalPct + '%, not 100%. Save anyway?')) return;
+        }
+
+        DataStore.updateWageRules(rules);
+
+        // Ratio
+        var ratio = parseFloat(document.getElementById('wageRatioInput').value);
+        if (!isNaN(ratio) && ratio > 0) {
+          DataStore.updateWageConfig({ distributableRatio: ratio });
+        }
+
+        // Staff roles
+        var staff = DataStore.getLists().staff || [];
+        var checkboxes = document.querySelectorAll('.staff-role-cb');
+        var staffRoleMap = {};
+
+        checkboxes.forEach(function(cb) {
+          var name = cb.getAttribute('data-staff');
+          var role = cb.getAttribute('data-role');
+          if (!staffRoleMap[name]) staffRoleMap[name] = [];
+          if (cb.checked) staffRoleMap[name].push(role);
+        });
+
+        staff.forEach(function(s) {
+          if (staffRoleMap[s.name]) {
+            DataStore.updateStaffRoles(s.name, staffRoleMap[s.name]);
+          }
+        });
+
+        showToast('✅ Wage settings saved');
+        renderWageSettings();
+      };
+
+      // Init wage settings
+      renderWageSettings();
+
+      updateInfo();
+      DataStore.onChange(updateInfo);
+
+      // Toast helper
+      function showToast(msg) {
+        var t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function() { t.remove(); }, 2500);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,765 @@
+     1→<!DOCTYPE html>
+     2→<html lang="en">
+     3→<head>
+     4→  <meta charset="UTF-8">
+     5→  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+     6→  <meta name="theme-color" content="#0f0f13">
+     7→  <link rel="manifest" href="manifest.json">
+     8→  <link rel="icon" href="icon.svg" type="image/svg+xml">
+     9→  <title>Settings — Photography Tracker</title>
+    10→  <link rel="stylesheet" href="shared.css">
+    11→  <!-- SheetJS for Excel export -->
+    12→  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    13→</head>
+    14→<body>
+    15→
+    16→  <div class="page" id="app">
+    17→    <div class="page-header">
+    18→      <a href="dashboard.html" class="icon-btn" aria-label="Back">←</a>
+    19→      <h1>Settings</h1>
+    20→      <span class="subtitle" style="width:36px"></span>
+    21→    </div>
+    22→
+    23→    <!-- Data Backup & Restore -->
+    24→    <div class="section-title">Data Backup & Restore</div>
+    25→
+    26→    <div class="card">
+    27→      <div class="card-header">
+    28→        <div class="card-title">Local File Backup</div>
+    29→      </div>
+    30→      <div class="card-subtitle">Traditional download/upload — works offline</div>
+    31→      <div class="form-actions">
+    32→        <button class="btn btn-primary" onclick="downloadBackup()">
+    33→          📤 Download Backup
+    34→        </button>
+    35→        <button class="btn btn-secondary" onclick="document.getElementById('localImportInput').click()">
+    36→          📥 Import Backup
+    37→        </button>
+    38→      </div>
+    39→      <input type="file" id="localImportInput" accept=".json" style="display:none" onchange="handleLocalImport(event)">
+    40→    </div>
+    41→
+    42→    <div class="card">
+    43→      <div class="card-header">
+    44→        <div class="card-title">Cloud Backup (Share to Drive, OneDrive, Dropbox…)</div>
+    45→      </div>
+    46→      <div class="card-subtitle">Saves to Downloads, then opens Android share sheet — pick Google Drive, OneDrive, Dropbox, etc.</div>
+    47→      <div class="form-actions">
+    48→        <button class="btn btn-primary" onclick="shareBackupToCloud()">
+    49→          ☁️ Share Backup to Cloud…
+    50→        </button>
+    51→        <button class="btn btn-secondary" onclick="document.getElementById('cloudImportInput').click()">
+    52→          📥 Load from Cloud/Files…
+    53→        </button>
+    54→      </div>
+    55→      <input type="file" id="cloudImportInput" accept=".json" style="display:none" onchange="handleCloudImport(event)">
+    56→      <p class="text-xs text-muted mt-8">Share uses Android's native share sheet. Load picks from Downloads/Drive/Files app.</p>
+    57→    </div>
+    58→
+    59→    <div class="card">
+    60→      <div class="card-header">
+    61→        <div class="card-title">Export to Excel / CSV (for Google Sheets)</div>
+    62→      </div>
+    63→      <div class="card-subtitle">Creates a multi-sheet Excel file — open in Excel, Google Sheets, LibreOffice</div>
+    64→      <div class="form-actions">
+    65→        <button class="btn btn-primary" onclick="exportToExcel()">
+    66→          📊 Export to Excel (.xlsx)
+    67→        </button>
+    68→        <button class="btn btn-secondary" onclick="exportToCSV()">
+    69→          📄 Export to CSV (separate files)
+    70→        </button>
+    71→      </div>
+    72→      <p class="text-xs text-muted mt-8">For Google Sheets: export Excel → open Google Sheets → File → Import → Upload the .xlsx</p>
+    73→    </div>
+    74→
+    75→    <!-- Google Sheets Sync -->
+    76→    <div class="section-title">Google Sheets Sync</div>
+    77→
+    78→    <div class="card" id="syncCard">
+    79→      <div class="card-header">
+    80→        <div class="card-title">Sync with Google Sheets</div>
+    81→        <span id="syncStatusBadge" class="badge" style="font-size:11px;padding:2px 8px"></span>
+    82→      </div>
+    83→      <div class="card-subtitle">Push data to a live Google Sheet — readable by anyone you share the sheet with.</div>
+    84→
+    85→      <div class="form-group" style="margin-top:12px">
+    86→        <label class="form-label">Apps Script Web App URL</label>
+    87→        <input type="url" id="syncUrl" class="form-input"
+    88→               placeholder="https://script.google.com/macros/s/…/exec"
+    89→               style="font-size:12px">
+    90→        <p class="text-xs text-muted mt-4">Paste the URL from: Extensions &rsaquo; Apps Script &rsaquo; Deploy &rsaquo; Web app</p>
+    91→      </div>
+    92→
+    93→      <div class="form-group">
+    94→        <label class="form-label">Secret Token (optional)</label>
+    95→        <input type="password" id="syncToken" class="form-input" placeholder="Leave blank if you skipped AUTH_TOKEN">
+    96→      </div>
+    97→
+    98→      <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+    99→        <input type="checkbox" id="syncAuto" style="width:18px;height:18px;cursor:pointer">
+   100→        <label for="syncAuto" style="cursor:pointer;font-size:14px">Auto-sync after every change</label>
+   101→      </div>
+   102→      <p class="text-xs text-muted mt-4" style="margin-bottom:12px">When enabled, every save silently pushes to Sheets in the background.</p>
+   103→
+   104→      <div class="form-actions">
+   105→        <button class="btn btn-primary"   onclick="syncSaveConfig()">Save Config</button>
+   106→        <button class="btn btn-secondary" onclick="syncPushNow()">Push Now</button>
+   107→        <button class="btn btn-secondary" onclick="syncPullNow()">Pull from Sheet</button>
+   108→      </div>
+   109→      <p class="text-xs text-muted mt-8" id="syncLastStatus"></p>
+   110→    </div>
+   111→
+   112→    <div class="card" style="background:var(--surface-2,#1a1a24);border-left:3px solid #4a90d9">
+   113→      <div class="card-title" style="font-size:13px;margin-bottom:8px">Setup Guide</div>
+   114→      <ol style="font-size:12px;color:var(--text-2,#aaa);line-height:1.8;padding-left:16px;margin:0">
+   115→        <li>Open (or create) a Google Sheet</li>
+   116→        <li>Click <strong>Extensions &rsaquo; Apps Script</strong></li>
+   117→        <li>Paste the contents of <code>google-apps-script.js</code> into Code.gs &mdash; replace everything</li>
+   118→        <li>Click <strong>Deploy &rsaquo; New deployment &rsaquo; Web app</strong></li>
+   119→        <li>Set <em>Execute as</em>: <strong>Me</strong> and <em>Who has access</em>: <strong>Anyone</strong></li>
+   120→        <li>Copy the Web App URL and paste it above</li>
+   121→        <li>Click <strong>Save Config</strong>, then <strong>Push Now</strong> to test</li>
+   122→      </ol>
+   123→    </div>
+   124→
+   125→    <div class="section-title">Wage Settings</div>
+   126→
+   127→    <div class="card">
+   128→      <div class="card-header">
+   129→        <div class="card-title">Distributable Ratio</div>
+   130→      </div>
+   131→      <div class="card-subtitle">What portion of total payment goes to wage distribution (matching Excel's 1,000,000 / 1,600,000 = 0.625)</div>
+   132→      <div class="form-group" style="margin-top:12px">
+   133→        <label class="form-label">Ratio (0.0 – 1.0)</label>
+   134→        <input type="number" id="wageRatioInput" class="form-input" min="0" max="1" step="0.005" value="0.625">
+   135→      </div>
+   136→    </div>
+   137→
+   138→    <div class="card">
+   139→      <div class="card-header">
+   140→        <div class="card-title">Wage Roles &amp; Percentages</div>
+   141→      </div>
+   142→      <div class="card-subtitle">The role split percentages — total of all roles must equal 100% (1.0)</div>
+   143→      <div id="wageRulesContainer" style="margin-top:12px"></div>
+   144→      <div class="form-actions" style="margin-top:8px">
+   145→        <button class="btn btn-secondary" onclick="addWageRuleRow()">➕ Add Role</button>
+   146→      </div>
+   147→    </div>
+   148→
+   149→    <div class="card">
+   150→      <div class="card-header">
+   151→        <div class="card-title">Staff → Role Assignments</div>
+   152→      </div>
+   153→      <div class="card-subtitle">Assign which wage roles each staff member qualifies for</div>
+   154→      <div id="staffRolesContainer" style="margin-top:12px"></div>
+   155→    </div>
+   156→
+   157→    <div class="form-actions" style="margin-bottom:16px">
+   158→      <button class="btn btn-primary" onclick="saveWageSettings()">💾 Save Wage Settings</button>
+   159→    </div>
+   160→
+   161→    <div class="section-title">App Info</div>
+   162→    <div class="card">
+   163→      <div class="card-row">
+   164→        <span class="label">Version</span>
+   165→        <span class="value">1.0.0</span>
+   166→      </div>
+   167→      <div class="card-row">
+   168→        <span class="label">Storage</span>
+   169→        <span class="value" id="storageInfo">Calculating…</span>
+   170→      </div>
+   171→      <div class="card-row">
+   172→        <span class="label">Data Entries</span>
+   173→        <span class="value" id="dataCount">—</span>
+   174→      </div>
+   175→    </div>
+   176→
+   177→    <div class="section-title">Danger Zone</div>
+   178→    <div class="card">
+   179→      <button class="btn btn-danger" style="width:100%" onclick="confirmClearAll()">
+   180→        🗑️ Clear All Data
+   181→      </button>
+   182→      <p class="text-xs text-muted mt-8">Permanently deletes all jobs, payments, tasks, and settings. Cannot be undone.</p>
+   183→    </div>
+   184→  </div>
+   185→
+   186→  <script src="data.js"></script>
+   187→  <script src="cloud-sync.js"></script>
+   188→  <script>
+   189→    (function() {
+   190→      // Register service worker
+   191→      if ('serviceWorker' in navigator) {
+   192→        navigator.serviceWorker.register('sw.js');
+   193→      }
+   194→
+   195→      // Update storage info
+   196→      function updateInfo() {
+   197→        var jobs = DataStore.getJobs();
+   198→        var pays = DataStore.getPayments();
+   199→        var tasks = DataStore.getTasks();
+   200→        var lists = DataStore.getLists();
+   201→        var total = jobs.length + pays.length + tasks.length;
+   202→        document.getElementById('dataCount').textContent =
+   203→          jobs.length + ' jobs, ' + pays.length + ' payments, ' + tasks.length + ' tasks';
+   204→
+   205→        // Estimate localStorage size
+   206→        try {
+   207→          var data = JSON.stringify({
+   208→            jobs: jobs, payments: pays, tasks: tasks, lists: lists
+   209→          });
+   210→          var kb = (data.length / 1024).toFixed(1);
+   211→          document.getElementById('storageInfo').textContent = kb + ' KB';
+   212→        } catch(e) {
+   213→          document.getElementById('storageInfo').textContent = 'Unknown';
+   214→        }
+   215→      }
+   216→
+   217→      // Local file backup (existing behavior)
+   218→      function downloadBackup() {
+   219→        var data = DataStore.exportData();
+   220→        var blob = new Blob([data], { type: 'application/json' });
+   221→        var url = URL.createObjectURL(blob);
+   222→        var a = document.createElement('a');
+   223→        a.href = url;
+   224→        a.download = 'photography-backup-' + new Date().toISOString().split('T')[0] + '.json';
+   225→        a.click();
+   226→        URL.revokeObjectURL(url);
+   227→        showToast('Backup downloaded');
+   228→      }
+   229→
+   230→      window.handleLocalImport = function(e) {
+   231→        var file = e.target.files[0];
+   232→        if (!file) return;
+   233→        if (!confirm('Import will REPLACE all current data. Continue?')) {
+   234→          e.target.value = '';
+   235→          return;
+   236→        }
+   237→        var reader = new FileReader();
+   238→        reader.onload = function(ev) {
+   239→          try {
+   240→            DataStore.importData(ev.target.result);
+   241→            showToast('Data imported successfully');
+   242→            setTimeout(function() { location.reload(); }, 800);
+   243→          } catch(err) {
+   244→            showToast('Import failed: ' + err.message);
+   245→          }
+   246→        };
+   247→        reader.readAsText(file);
+   248→        e.target.value = '';
+   249→      };
+   250→
+   251→      // Cloud Backup via Web Share API (works in WebView/APK)
+   252→      async function shareBackupToCloud() {
+   253→        var data = DataStore.exportData();
+   254→        var blob = new Blob([data], { type: 'application/json' });
+   255→        var fileName = 'photography-backup-' + new Date().toISOString().split('T')[0] + '.json';
+   256→        var file = new File([blob], fileName, { type: 'application/json' });
+   257→
+   258→        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+   259→          try {
+   260→            await navigator.share({
+   261→              title: 'Photography Tracker Backup',
+   262→              text: 'Backup exported on ' + new Date().toLocaleDateString(),
+   263→              files: [file]
+   264→            });
+   265→            showToast('✅ Shared — pick Google Drive, OneDrive, etc.');
+   266→          } catch(err) {
+   267→            if (err.name !== 'AbortError') {
+   268→              console.error('Share failed:', err);
+   269→              showToast('Share failed: ' + err.message);
+   270→            }
+   271→          }
+   272→        } else {
+   273→          // Fallback: download to Downloads folder
+   274→          var url = URL.createObjectURL(blob);
+   275→          var a = document.createElement('a');
+   276→          a.href = url;
+   277→          a.download = fileName;
+   278→          a.click();
+   279→          URL.revokeObjectURL(url);
+   280→          showToast('⚠️ Share not supported — saved to Downloads instead');
+   281→        }
+   282→      }
+   283→
+   284→      window.handleCloudImport = function(e) {
+   285→        var file = e.target.files[0];
+   286→        if (!file) return;
+   287→        if (!confirm('Load will REPLACE all current data. Continue?')) {
+   288→          e.target.value = '';
+   289→          return;
+   290→        }
+   291→        var reader = new FileReader();
+   292→        reader.onload = function(ev) {
+   293→          try {
+   294→            DataStore.importData(ev.target.result);
+   295→            showToast('✅ Data loaded from cloud');
+   296→            setTimeout(function() { location.reload(); }, 800);
+   297→          } catch(err) {
+   298→            showToast('Load failed: ' + err.message);
+   299→          }
+   300→        };
+   301→        reader.readAsText(file);
+   302→        e.target.value = '';
+   303→      };
+   304→
+   305→      // Excel / CSV Export
+   306→      function exportToExcel() {
+   307→        try {
+   308→          var jobs = DataStore.getJobs();
+   309→          var pays = DataStore.getPayments();
+   310→          var tasks = DataStore.getTasks();
+   311→          var lists = DataStore.getLists();
+   312→
+   313→          var wb = XLSX.utils.book_new();
+   314→
+   315→          // Jobs sheet
+   316→          var jobsData = jobs.map(function(j) {
+   317→            return {
+   318→              'Job ID': j.id,
+   319→              'Client': j.clientName,
+   320→              'Event Date': j.eventDate ? excelDate(j.eventDate) : '',
+   321→              'Event Type': j.eventType,
+   322→              'Location': j.location,
+   323→              'Status': j.status,
+   324→              'Package': j.packageName,
+   325→              'Package Price': j.packagePrice,
+   326→              'Add-ons Total': j.addonsTotal || 0,
+   327→              'Total Price': (j.packagePrice || 0) + (j.addonsTotal || 0),
+   328→              'Deposit Paid': j.depositPaid || 0,
+   329→              'Balance Due': ((j.packagePrice || 0) + (j.addonsTotal || 0)) - (j.depositPaid || 0),
+   330→              'Created': j.createdAt ? excelDate(j.createdAt) : '',
+   331→              'Notes': j.notes || ''
+   332→            };
+   333→          });
+   334→          var wsJobs = XLSX.utils.json_to_sheet(jobsData);
+   335→          XLSX.utils.book_append_sheet(wb, wsJobs, 'Jobs');
+   336→
+   337→          // Payments sheet
+   338→          var paysData = pays.map(function(p) {
+   339→            var job = jobs.find(function(j) { return j.id === p.jobId; });
+   340→            return {
+   341→              'Payment ID': p.id,
+   342→              'Job ID': p.jobId,
+   343→              'Client': job ? job.clientName : '',
+   344→              'Date': p.date ? excelDate(p.date) : '',
+   345→              'Amount': p.amount,
+   346→              'Method': p.method,
+   347→              'Notes': p.notes || ''
+   348→            };
+   349→          });
+   350→          var wsPays = XLSX.utils.json_to_sheet(paysData);
+   351→          XLSX.utils.book_append_sheet(wb, wsPays, 'Payments');
+   352→
+   353→          // Tasks sheet
+   354→          var tasksData = tasks.map(function(t) {
+   355→            var job = jobs.find(function(j) { return j.id === t.jobId; });
+   356→            return {
+   357→              'Task ID': t.id,
+   358→              'Job ID': t.jobId,
+   359→              'Client': job ? job.clientName : '',
+   360→              'Title': t.title,
+   361→              'Status': t.done ? 'Done' : 'Pending',
+   362→              'Due Date': t.dueDate ? excelDate(t.dueDate) : '',
+   363→              'Created': t.createdAt ? excelDate(t.createdAt) : ''
+   364→            };
+   365→          });
+   366→          var wsTasks = XLSX.utils.json_to_sheet(tasksData);
+   367→          XLSX.utils.book_append_sheet(wb, wsTasks, 'Tasks');
+   368→
+   369→          // Lists sheet (reference data)
+   370→          var listsData = {
+   371→            'Event Types': lists.eventTypes || [],
+   372→            'Package Names': lists.packageNames || [],
+   373→            'Payment Methods': lists.paymentMethods || [],
+   374→            'Task Templates': (lists.taskTemplates || []).map(function(t) { return t.title; }),
+   375→            'Statuses': lists.statuses || []
+   376→          };
+   377→          var listsRows = [];
+   378→          Object.keys(listsData).forEach(function(key) {
+   379→            listsData[key].forEach(function(val, i) {
+   380→              if (!listsRows[i]) listsRows[i] = {};
+   381→              listsRows[i][key] = val;
+   382→            });
+   383→          });
+   384→          var wsLists = XLSX.utils.json_to_sheet(listsRows);
+   385→          XLSX.utils.book_append_sheet(wb, wsLists, 'Reference Lists');
+   386→
+   387→          // Wage Distributions sheet
+   388→          var wds = DataStore.getWageDistributions();
+   389→          if (wds.length > 0) {
+   390→            var wdData = [];
+   391→            wds.forEach(function(w) {
+   392→              var job = jobs.find(function(j) { return j.id === w.jobId; });
+   393→              if (w.breakdown && w.breakdown.length > 0) {
+   394→                w.breakdown.forEach(function(b) {
+   395→                  wdData.push({
+   396→                    'WD ID': w.id,
+   397→                    'Job ID': w.jobId,
+   398→                    'Client': job ? job.clientName : '',
+   399→                    'Date': w.created ? excelDate(w.created) : '',
+   400→                    'Total Paid': w.totalPaid || 0,
+   401→                    'Dist. Base': w.distributableBase || 0,
+   402→                    'Staff': b.staffName || '',
+   403→                    'Roles': (b.roles || []).join(', '),
+   404→                    'Percentage': Math.round((b.percentage || 0) * 100) + '%',
+   405→                    'Amount': b.amount || 0
+   406→                  });
+   407→                });
+   408→              } else {
+   409→                wdData.push({
+   410→                  'WD ID': w.id,
+   411→                  'Job ID': w.jobId,
+   412→                  'Client': job ? job.clientName : '',
+   413→                  'Date': w.created ? excelDate(w.created) : '',
+   414→                  'Total Paid': w.totalPaid || 0,
+   415→                  'Dist. Base': w.distributableBase || 0,
+   416→                  'Staff': '', 'Roles': '', 'Percentage': '', 'Amount': ''
+   417→                });
+   418→              }
+   419→            });
+   420→            var wsWds = XLSX.utils.json_to_sheet(wdData);
+   421→            XLSX.utils.book_append_sheet(wb, wsWds, 'Wage Distributions');
+   422→          }
+   423→
+   424→          // Set column widths
+   425→          ['Jobs', 'Payments', 'Tasks', 'Reference Lists', 'Wage Distributions'].forEach(function(name) {
+   426→            var ws = wb.Sheets[name];
+   427→            if (ws) {
+   428→              var range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+   429→              var cols = [];
+   430→              for (var c = range.s.c; c <= range.e.c; c++) {
+   431→                var cellAddr = XLSX.utils.encode_cell({ r: 0, c: c });
+   432→                var cell = ws[cellAddr];
+   433→                var width = cell && cell.v ? String(cell.v).length + 4 : 12;
+   434→                cols.push({ wch: Math.min(Math.max(width, 10), 40) });
+   435→              }
+   436→              ws['!cols'] = cols;
+   437→            }
+   438→          });
+   439→
+   440→          var fileName = 'photography-tracker-' + new Date().toISOString().split('T')[0] + '.xlsx';
+   441→          XLSX.writeFile(wb, fileName);
+   442→          showToast('✅ Excel exported: ' + fileName);
+   443→        } catch(err) {
+   444→          console.error('Excel export error:', err);
+   445→          showToast('Export failed: ' + err.message);
+   446→        }
+   447→      }
+   448→
+   449→      function exportToCSV() {
+   450→        try {
+   451→          var jobs = DataStore.getJobs();
+   452→          var pays = DataStore.getPayments();
+   453→          var tasks = DataStore.getTasks();
+   454→
+   455→          var datasets = [
+   456→            { name: 'jobs', data: jobs.map(function(j) { return {
+   457→              'Job ID': j.id, 'Client': j.clientName, 'Event Date': j.eventDate ? excelDate(j.eventDate) : '',
+   458→              'Event Type': j.eventType, 'Location': j.location, 'Status': j.status,
+   459→              'Package': j.packageName, 'Package Price': j.packagePrice, 'Add-ons Total': j.addonsTotal || 0,
+   460→              'Total Price': (j.packagePrice || 0) + (j.addonsTotal || 0),
+   461→              'Deposit Paid': j.depositPaid || 0,
+   462→              'Balance Due': ((j.packagePrice || 0) + (j.addonsTotal || 0)) - (j.depositPaid || 0),
+   463→              'Created': j.createdAt ? excelDate(j.createdAt) : '', 'Notes': j.notes || ''
+   464→            }; }) },
+   465→            { name: 'payments', data: pays.map(function(p) {
+   466→              var job = jobs.find(function(j) { return j.id === p.jobId; });
+   467→              return {
+   468→                'Payment ID': p.id, 'Job ID': p.jobId, 'Client': job ? job.clientName : '',
+   469→                'Date': p.date ? excelDate(p.date) : '', 'Amount': p.amount,
+   470→                'Method': p.method, 'Notes': p.notes || ''
+   471→              };
+   472→            }) },
+   473→            { name: 'tasks', data: tasks.map(function(t) {
+   474→              var job = jobs.find(function(j) { return j.id === t.jobId; });
+   475→              return {
+   476→                'Task ID': t.id, 'Job ID': t.jobId, 'Client': job ? job.clientName : '',
+   477→                'Title': t.title, 'Status': t.done ? 'Done' : 'Pending',
+   478→                'Due Date': t.dueDate ? excelDate(t.dueDate) : '',
+   479→                'Created': t.createdAt ? excelDate(t.createdAt) : ''
+   480→              };
+   481→            }) }
+   482→          ];
+   483→
+   484→          datasets.forEach(function(ds) {
+   485→            var ws = XLSX.utils.json_to_sheet(ds.data);
+   486→            var csv = XLSX.utils.sheet_to_csv(ws);
+   487→            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+   488→            var url = URL.createObjectURL(blob);
+   489→            var a = document.createElement('a');
+   490→            a.href = url;
+   491→            a.download = 'photography-' + ds.name + '-' + new Date().toISOString().split('T')[0] + '.csv';
+   492→            a.click();
+   493→            URL.revokeObjectURL(url);
+   494→          });
+   495→          showToast('✅ CSVs exported (jobs, payments, tasks)');
+   496→        } catch(err) {
+   497→          console.error('CSV export error:', err);
+   498→          showToast('CSV export failed: ' + err.message);
+   499→        }
+   500→      }
+   501→
+   502→      // Helper: convert Excel serial date to YYYY-MM-DD
+   503→      function excelDate(serial) {
+   504→        if (!serial) return '';
+   505→        var d = new Date(Math.round((serial - 25569) * 86400 * 1000));
+   506→        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+   507→      }
+   508→
+   509→      // Danger zone
+   510→      function confirmClearAll() {
+   511→        if (confirm('⚠️ PERMANENTLY delete ALL data?\n\nThis cannot be undone.')) {
+   512→          if (confirm('Type "DELETE" to confirm:')) {
+   513→            var input = prompt('Type DELETE to confirm:');
+   514→            if (input === 'DELETE') {
+   515→              localStorage.clear();
+   516→              showToast('All data cleared');
+   517→              setTimeout(function() { location.reload(); }, 800);
+   518→            }
+   519→          }
+   520→        }
+   521→      }
+   522→
+   523→      // ── Google Sheets Sync UI ──────────────────────────────────
+   524→
+   525→      function syncLoadConfig() {
+   526→        document.getElementById('syncUrl').value   = CloudSync.getUrl();
+   527→        document.getElementById('syncToken').value = CloudSync.getToken();
+   528→        document.getElementById('syncAuto').checked = CloudSync.isAutoSync();
+   529→        syncRefreshStatus();
+   530→      }
+   531→
+   532→      function syncRefreshStatus() {
+   533→        var s = CloudSync.getLastStatus();
+   534→        var badge = document.getElementById('syncStatusBadge');
+   535→        var label = document.getElementById('syncLastStatus');
+   536→        if (!s) {
+   537→          badge.textContent = 'Not synced';
+   538→          badge.style.background = '#555';
+   539→          badge.style.color = '#ccc';
+   540→          label.textContent = '';
+   541→          return;
+   542→        }
+   543→        if (s.ok) {
+   544→          badge.textContent = 'Synced';
+   545→          badge.style.background = '#1a6e3c';
+   546→          badge.style.color = '#7fffb0';
+   547→        } else {
+   548→          badge.textContent = 'Error';
+   549→          badge.style.background = '#6e1a1a';
+   550→          badge.style.color = '#ffb0b0';
+   551→        }
+   552→        label.textContent = s.message + ' (' + new Date(s.time).toLocaleString() + ')';
+   553→      }
+   554→
+   555→      window.syncSaveConfig = function() {
+   556→        var url   = document.getElementById('syncUrl').value.trim();
+   557→        var token = document.getElementById('syncToken').value.trim();
+   558→        var auto  = document.getElementById('syncAuto').checked;
+   559→        if (url && !url.startsWith('https://script.google.com/')) {
+   560→          showToast('URL does not look like a Google Apps Script URL');
+   561→          return;
+   562→        }
+   563→        CloudSync.saveConfig(url, token, auto);
+   564→        showToast(url ? 'Sync config saved' : 'Sync config cleared');
+   565→        syncRefreshStatus();
+   566→      };
+   567→
+   568→      window.syncPushNow = function() {
+   569→        if (!CloudSync.isConfigured()) {
+   570→          showToast('Enter and save a Script URL first');
+   571→          return;
+   572→        }
+   573→        showToast('Pushing to Google Sheets...');
+   574→        CloudSync.push(function(ok, msg) {
+   575→          showToast(ok ? 'Pushed to Sheets' : 'Push failed: ' + msg);
+   576→          syncRefreshStatus();
+   577→        });
+   578→      };
+   579→
+   580→      window.syncPullNow = function() {
+   581→        if (!CloudSync.isConfigured()) {
+   582→          showToast('Enter and save a Script URL first');
+   583→          return;
+   584→        }
+   585→        if (!confirm('Pull will REPLACE local data with data from Google Sheets. Continue?')) return;
+   586→        showToast('Pulling from Google Sheets...');
+   587→        CloudSync.pull(function(ok, msg) {
+   588→          showToast(ok ? 'Data loaded from Sheets' : 'Pull failed: ' + msg);
+   589→          syncRefreshStatus();
+   590→          if (ok) setTimeout(function() { location.reload(); }, 1000);
+   591→        });
+   592→      };
+   593→
+   594→      syncLoadConfig();
+   595→
+   596→      // ── End Sync UI ──
+   597→
+   598→      // ── Wage Settings UI ──
+   599→
+   600→      function renderWageSettings() {
+   601→        var rules = DataStore.getWageRules();
+   602→        var config = DataStore.getWageConfig();
+   603→        var staff = DataStore.getLists().staff || [];
+   604→
+   605→        // Ratio
+   606→        document.getElementById('wageRatioInput').value = config.distributableRatio || 0.625;
+   607→
+   608→        // Rules
+   609→        renderWageRules(rules);
+   610→        renderStaffRoles(staff, rules);
+   611→      }
+   612→
+   613→      function renderWageRules(rules) {
+   614→        var container = document.getElementById('wageRulesContainer');
+   615→        var rulesArr = rules || [];
+   616→        var html = '';
+   617→        var totalPct = 0;
+   618→
+   619→        rulesArr.forEach(function(r, i) {
+   620→          var pct = Math.round(r.percentage * 100);
+   621→          totalPct += pct;
+   622→          html +=
+   623→            '<div class="form-row" style="margin-bottom:8px;align-items:center">' +
+   624→              '<div class="form-group" style="margin-bottom:0;flex:3">' +
+   625→                '<input type="text" class="form-input rule-name" value="' + escHtml(r.role) + '" placeholder="Role name" data-idx="' + i + '">' +
+   626→              '</div>' +
+   627→              '<div class="form-group" style="margin-bottom:0;flex:1;margin-left:6px">' +
+   628→                '<input type="number" class="form-input rule-pct" value="' + pct + '" min="0" max="100" step="1" data-idx="' + i + '" style="text-align:center">' +
+   629→              '</div>' +
+   630→              '<button class="icon-btn" onclick="removeWageRule(' + i + ')" style="flex-shrink:0" title="Remove">✕</button>' +
+   631→            '</div>';
+   632→        });
+   633→
+   634→        html += '<div class="wage-info-row"><span class="wage-info-label">Total</span><span class="wage-info-value" style="color:' + (totalPct === 100 ? 'var(--green)' : 'var(--red)') + '">' + totalPct + '%</span></div>';
+   635→        container.innerHTML = html;
+   636→      }
+   637→
+   638→      window.addWageRuleRow = function() {
+   639→        var rules = DataStore.getWageRules();
+   640→        rules.push({ role: '', percentage: 0 });
+   641→        renderWageRules(rules);
+   642→      };
+   643→
+   644→      window.removeWageRule = function(idx) {
+   645→        var rules = DataStore.getWageRules();
+   646→        rules.splice(idx, 1);
+   647→        renderWageRules(rules);
+   648→      };
+   649→
+   650→      function renderStaffRoles(staff, rules) {
+   651→        var container = document.getElementById('staffRolesContainer');
+   652→        var staffArr = staff || [];
+   653→        var rulesArr = rules || [];
+   654→        var roleNames = rulesArr.map(function(r) { return r.role; }).filter(function(n) { return n.trim(); });
+   655→
+   656→        if (roleNames.length === 0) {
+   657→          container.innerHTML = '<div class="wage-info-row"><span class="wage-info-label" style="color:var(--text3)">Add some wage roles first</span></div>';
+   658→          return;
+   659→        }
+   660→
+   661→        if (staffArr.length === 0) {
+   662→          container.innerHTML = '<div class="wage-info-row"><span class="wage-info-label" style="color:var(--text3)">No staff defined</span></div>';
+   663→          return;
+   664→        }
+   665→
+   666→        var html = '';
+   667→        staffArr.forEach(function(s, si) {
+   668→          var staffRoles = s.roles || [];
+   669→          html +=
+   670→            '<div style="margin-bottom:12px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm)">' +
+   671→              '<div style="font-weight:600;font-size:0.88rem;margin-bottom:6px">' + escHtml(s.name) + ' <span class="text-muted text-xs">(' + escHtml(s.role || '') + ')</span></div>' +
+   672→              '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+   673→          roleNames.forEach(function(role) {
+   674→            var checked = staffRoles.indexOf(role) !== -1;
+   675→            html +=
+   676→              '<label style="display:flex;align-items:center;gap:4px;font-size:0.82rem;cursor:pointer;padding:4px 8px;background:' + (checked ? 'var(--accent)' : 'var(--surface3)') + ';border-radius:16px;color:' + (checked ? '#fff' : 'var(--text2)') + ';transition:all 0.1s">' +
+   677→                '<input type="checkbox" class="staff-role-cb" data-staff="' + s.name + '" data-role="' + role + '" ' + (checked ? 'checked' : '') + ' style="display:none" onchange="toggleStaffRoleBadge(this)">' +
+   678→                '<span>' + role + '</span>' +
+   679→              '</label>';
+   680→          });
+   681→          html += '</div></div>';
+   682→        });
+   683→
+   684→        container.innerHTML = html;
+   685→      }
+   686→
+   687→      window.toggleStaffRoleBadge = function(cb) {
+   688→        // Toggle label background
+   689→        var label = cb.parentElement;
+   690→        if (cb.checked) {
+   691→          label.style.background = 'var(--accent)';
+   692→          label.style.color = '#fff';
+   693→        } else {
+   694→          label.style.background = 'var(--surface3)';
+   695→          label.style.color = 'var(--text2)';
+   696→        }
+   697→      };
+   698→
+   699→      window.saveWageSettings = function() {
+   700→        // Rules
+   701→        var ruleNameInputs = document.querySelectorAll('.rule-name');
+   702→        var rulePctInputs = document.querySelectorAll('.rule-pct');
+   703→        var rules = [];
+   704→        var valid = true;
+   705→
+   706→        for (var i = 0; i < ruleNameInputs.length; i++) {
+   707→          var name = ruleNameInputs[i].value.trim();
+   708→          var pct = parseFloat(rulePctInputs[i].value);
+   709→          if (!name || isNaN(pct) || pct <= 0) continue;
+   710→          rules.push({ role: name, percentage: pct / 100 });
+   711→        }
+   712→
+   713→        var totalPct = rules.reduce(function(sum, r) { return sum + Math.round(r.percentage * 100); }, 0);
+   714→        if (totalPct !== 100) {
+   715→          if (!confirm('Role percentages total ' + totalPct + '%, not 100%. Save anyway?')) return;
+   716→        }
+   717→
+   718→        DataStore.updateWageRules(rules);
+   719→
+   720→        // Ratio
+   721→        var ratio = parseFloat(document.getElementById('wageRatioInput').value);
+   722→        if (!isNaN(ratio) && ratio > 0) {
+   723→          DataStore.updateWageConfig({ distributableRatio: ratio });
+   724→        }
+   725→
+   726→        // Staff roles
+   727→        var staff = DataStore.getLists().staff || [];
+   728→        var checkboxes = document.querySelectorAll('.staff-role-cb');
+   729→        var staffRoleMap = {};
+   730→
+   731→        checkboxes.forEach(function(cb) {
+   732→          var name = cb.getAttribute('data-staff');
+   733→          var role = cb.getAttribute('data-role');
+   734→          if (!staffRoleMap[name]) staffRoleMap[name] = [];
+   735→          if (cb.checked) staffRoleMap[name].push(role);
+   736→        });
+   737→
+   738→        staff.forEach(function(s) {
+   739→          if (staffRoleMap[s.name]) {
+   740→            DataStore.updateStaffRoles(s.name, staffRoleMap[s.name]);
+   741→          }
+   742→        });
+   743→
+   744→        showToast('✅ Wage settings saved');
+   745→        renderWageSettings();
+   746→      };
+   747→
+   748→      // Init wage settings
+   749→      renderWageSettings();
+   750→
+   751→      updateInfo();
+   752→      DataStore.onChange(updateInfo);
+   753→
+   754→      // Toast helper
+   755→      function showToast(msg) {
+   756→        var t = document.createElement('div');
+   757→        t.className = 'toast';
+   758→        t.textContent = msg;
+   759→        document.body.appendChild(t);
+   760→        setTimeout(function() { t.remove(); }, 2500);
+   761→      }
+   762→    })();
+   763→  </script>
+   764→</body>
+   765→</html>
