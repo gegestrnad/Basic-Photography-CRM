@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Photography Tracker — Prisma Schema
+// Database: SQLite (file-based, deploy-ready)
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,134 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ── Jobs ────────────────────────────────────────────────────────────────────
+model Job {
+  id             String    @id // JOB-0001 format, assigned in code
+  client         String
+  phone          String    @default("")
+  jobType        String
+  jobDate        DateTime
+  location       String    @default("")
+  status         String    // Inquiry | Booked | Shot | Editing | Ready | Delivered | Completed | Cancelled
+  paymentStatus  String    // UNPAID | Deposit-Paid | PAID | Refunded
+  totalFee       Int       @default(0)
+  deposit        Int       @default(0)
+  balance        Int       @default(0)
+  photographers  String    @default("")
+  editors        String    @default("")
+  clientSource   String    @default("")
+  notes          String    @default("")
+  createdAt      DateTime  @default(now())
+
+  payments       Payment[]
+  tasks          Task[]
+  wageDistributions WageDistribution[]
+
+  @@index([status])
+  @@index([jobDate])
+  @@index([paymentStatus])
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+// ── Payments ────────────────────────────────────────────────────────────────
+model Payment {
+  id            String   @id // PAY-0001 format
+  jobId         String?  // nullable for standalone payments
+  client        String
+  paymentDate   DateTime
+  amount        Int
+  method        String   // Cash | Bank Transfer | QRIS | E-wallet | Card | Other
+  status        String   // UNPAID | Deposit-Paid | PAID | Refunded
+  jobTotalFee   Int      @default(0) // snapshot at time of payment
+  jobBalance    Int      @default(0) // snapshot at time of payment
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+
+  job           Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([jobId])
+  @@index([status])
+  @@index([paymentDate])
+}
+
+// ── Tasks ───────────────────────────────────────────────────────────────────
+model Task {
+  id        String   @id // TSK-0001 format
+  jobId     String?  // nullable for standalone tasks
+  client    String
+  task      String
+  dueDate   DateTime
+  status    String   // OPEN | IN PROGRESS | WAITING | DONE | CANCELLED
+  notes     String   @default("")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  job       Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([jobId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ── Staff ───────────────────────────────────────────────────────────────────
+model Staff {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  primaryRole String   @default("") // e.g. "Photographer", "Editor"
+  phone       String   @default("")
+  notes       String   @default("")
+  roles       String   @default("[]") // JSON array of wage-role names
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Wage Rules ──────────────────────────────────────────────────────────────
+// Each row: a distributable role + its percentage (0-1)
+model WageRule {
+  id          String   @id @default(cuid())
+  role        String   @unique // "Photographer A", "Photo Editor", etc.
+  percentage  Float    // 0.30 means 30%
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Wage Config (singleton row) ─────────────────────────────────────────────
+// Holds the default operational expense items + legacy distributable ratio
+model WageConfig {
+  id                  String   @id @default("singleton")
+  // Legacy fallback ratio used when no operational expenses are entered yet.
+  // Real formula: distributableBase = gross - sum(operationalExpenses)
+  distributableRatio  Float    @default(0.625)
+  // Default operational expense item templates (JSON array of {name, amount})
+  defaultExpenses     String   @default("[]")
+  updatedAt           DateTime @updatedAt
+}
+
+// ── Wage Distributions (saved calculations) ─────────────────────────────────
+model WageDistribution {
+  id                 String   @id // WD-0001 format
+  jobId              String?
+  grossAmount        Int      // total paid from linked payments (or manual)
+  distributableBase  Int      // gross - sum(expenses)
+  totalPaid          Int      @default(0) // snapshot
+  breakdown          String   @default("[]") // JSON: [{staffName, role, roles[], percentage, amount}]
+  operationalExpenses String  @default("[]") // JSON: [{name, amount}]
+  notes              String   @default("")
+  createdAt          DateTime @default(now())
+
+  job                Job?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@index([jobId])
+  @@index([createdAt])
+}
+
+// ── List Values (configurable dropdowns) ────────────────────────────────────
+// Single table for all dropdown lists, discriminated by `listKey`
+model ListValue {
+  id        String   @id @default(cuid())
+  listKey   String   // "jobStatuses" | "paymentStatuses" | "jobTypes" | etc.
+  value     String
+  sortOrder Int      @default(0)
+  @@unique([listKey, value])
+  @@index([listKey])
 }
