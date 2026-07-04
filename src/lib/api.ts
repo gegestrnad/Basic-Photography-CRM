@@ -1,0 +1,75 @@
+// Lightweight typed API client for fetching from route handlers
+
+import type {
+  Job, Payment, Task, Staff, WageRule, WageConfig, Lists, Metrics,
+  WageDistribution, WageCalculationResult,
+} from '@/lib/types';
+
+async function fetchJson<T>(url: string, opts?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(err.error || `${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+// ── Jobs ──────────────────────────────────────────────────────
+export const jobsApi = {
+  list: () => fetchJson<{ jobs: Job[] }>('/api/jobs').then(r => r.jobs),
+  get: (id: string) => fetchJson<{ job: Job; payments: Payment[]; tasks: Task[]; wageDistributions: WageDistribution[] }>(`/api/jobs/${id}`),
+  create: (data: Partial<Job>) => fetchJson<{ job: Job }>('/api/jobs', { method: 'POST', body: JSON.stringify(data) }).then(r => r.job),
+  update: (id: string, changes: Partial<Job>) => fetchJson<{ job: Job }>(`/api/jobs/${id}`, { method: 'PUT', body: JSON.stringify(changes) }).then(r => r.job),
+  remove: (id: string) => fetchJson(`/api/jobs/${id}`, { method: 'DELETE' }),
+};
+
+// ── Payments ──────────────────────────────────────────────────
+export const paymentsApi = {
+  list: () => fetchJson<{ payments: Payment[] }>('/api/payments').then(r => r.payments),
+  create: (data: Partial<Payment>) => fetchJson<{ payment: Payment }>('/api/payments', { method: 'POST', body: JSON.stringify(data) }).then(r => r.payment),
+  update: (id: string, changes: Partial<Payment>) => fetchJson<{ payment: Payment }>(`/api/payments/${id}`, { method: 'PUT', body: JSON.stringify(changes) }).then(r => r.payment),
+  remove: (id: string) => fetchJson(`/api/payments/${id}`, { method: 'DELETE' }),
+};
+
+// ── Tasks ─────────────────────────────────────────────────────
+export const tasksApi = {
+  list: () => fetchJson<{ tasks: Task[] }>('/api/tasks').then(r => r.tasks),
+  create: (data: Partial<Task>) => fetchJson<{ task: Task }>('/api/tasks', { method: 'POST', body: JSON.stringify(data) }).then(r => r.task),
+  update: (id: string, changes: Partial<Task>) => fetchJson<{ task: Task }>(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(changes) }).then(r => r.task),
+  remove: (id: string) => fetchJson(`/api/tasks/${id}`, { method: 'DELETE' }),
+};
+
+// ── Wages ─────────────────────────────────────────────────────
+export const wagesApi = {
+  list: () => fetchJson<{ wageDistributions: WageDistribution[] }>('/api/wages').then(r => r.wageDistributions),
+  calculate: (jobId: string | null) =>
+    fetchJson<{ result: WageCalculationResult }>(`/api/wages/calculate${jobId ? `?jobId=${encodeURIComponent(jobId)}` : ''}`).then(r => r.result),
+  save: (data: Partial<WageDistribution>) => fetchJson<{ wageDistribution: WageDistribution }>('/api/wages', { method: 'POST', body: JSON.stringify(data) }).then(r => r.wageDistribution),
+  remove: (id: string) => fetchJson(`/api/wages/${id}`, { method: 'DELETE' }),
+};
+
+// ── Settings ──────────────────────────────────────────────────
+export interface SettingsBundle {
+  lists: Lists;
+  wageRules: WageRule[];
+  staff: Staff[];
+  wageConfig: WageConfig;
+}
+export const settingsApi = {
+  get: () => fetchJson<SettingsBundle>('/api/settings'),
+  update: (data: Partial<SettingsBundle>) => fetchJson('/api/settings', { method: 'PUT', body: JSON.stringify(data) }),
+};
+
+// ── Metrics ───────────────────────────────────────────────────
+export const metricsApi = {
+  get: () => fetchJson<{ metrics: Metrics }>('/api/metrics').then(r => r.metrics),
+};
+
+// ── Backup ────────────────────────────────────────────────────
+export const backupApi = {
+  export: () => fetch('/api/backup/export').then(r => r.blob()),
+  import: (data: any) => fetchJson('/api/backup/import', { method: 'POST', body: JSON.stringify(data) }),
+};

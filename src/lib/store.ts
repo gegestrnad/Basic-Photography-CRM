@@ -1,0 +1,44 @@
+'use client';
+
+import { create } from 'zustand';
+import type { ViewKey } from '@/lib/types';
+
+interface AppState {
+  // ── Navigation ──
+  view: ViewKey;
+  setView: (v: ViewKey) => void;
+
+  // ── Theme ──
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
+  setTheme: (t: 'dark' | 'light') => void;
+
+  // ── Settings cache (lists, wage rules, staff) ──
+  listsLoaded: boolean;
+  reloadListsFlag: number;
+  triggerListsReload: () => void;
+}
+
+export const useAppStore = create<AppState>((set, get) => ({
+  view: 'dashboard',
+  setView: (v) => set({ view: v }),
+
+  theme: 'dark',
+  toggleTheme: () => {
+    const next = get().theme === 'dark' ? 'light' : 'dark';
+    set({ theme: next });
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', next === 'dark');
+    }
+  },
+  setTheme: (t) => {
+    set({ theme: t });
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', t === 'dark');
+    }
+  },
+
+  listsLoaded: false,
+  reloadListsFlag: 0,
+  triggerListsReload: () => set({ reloadListsFlag: get().reloadListsFlag + 1 }),
+}));

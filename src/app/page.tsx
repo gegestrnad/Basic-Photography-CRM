@@ -1,31 +1,40 @@
-'use client'
+'use client';
+
+import { ThemeProvider } from 'next-themes';
+import { QueryProvider } from '@/components/query-provider';
+import { AppShell } from '@/components/app-shell';
+import { SettingsProvider } from '@/components/settings-provider';
+import { useAppStore } from '@/lib/store';
+import { DashboardView } from '@/components/views/dashboard-view';
+import { JobsView } from '@/components/views/jobs-view';
+import { PaymentsView } from '@/components/views/payments-view';
+import { TasksView } from '@/components/views/tasks-view';
+import { WagesView } from '@/components/views/wages-view';
+import { SettingsView } from '@/components/views/settings-view';
 
 export default function Home() {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      gap: '2rem',
-      padding: '1rem'
-    }}>
-      <div style={{
-        position: 'relative',
-        width: '6rem',
-        height: '6rem'
-      }}>
-        <img
-          src="/logo.svg"
-          alt="Z.ai Logo"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain'
-          }}
-        />
-      </div>
-    </div>
-  )
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <QueryProvider>
+        <SettingsProvider>
+          <AppShell>
+            <ActiveView />
+          </AppShell>
+        </SettingsProvider>
+      </QueryProvider>
+    </ThemeProvider>
+  );
+}
+
+function ActiveView() {
+  const view = useAppStore(s => s.view);
+  switch (view) {
+    case 'dashboard': return <DashboardView />;
+    case 'jobs':      return <JobsView />;
+    case 'payments':  return <PaymentsView />;
+    case 'tasks':     return <TasksView />;
+    case 'wages':     return <WagesView />;
+    case 'settings':  return <SettingsView />;
+    default:          return <DashboardView />;
+  }
 }
