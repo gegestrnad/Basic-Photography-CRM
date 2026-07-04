@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Photography Tracker",
+  title: "Photography Client Management",
   description: "Track photography jobs, payments, tasks, and wage distributions.",
   icons: {
     icon: "/logo.svg",

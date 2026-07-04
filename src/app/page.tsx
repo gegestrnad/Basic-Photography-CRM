@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { QueryProvider } from '@/components/query-provider';
 import { AppShell } from '@/components/app-shell';
 import { SettingsProvider } from '@/components/settings-provider';
+import { LanguageProvider } from '@/components/language-provider';
 import { useAppStore } from '@/lib/store';
 import { DashboardView } from '@/components/views/dashboard-view';
 import { JobsView } from '@/components/views/jobs-view';
@@ -15,13 +16,15 @@ import { SettingsView } from '@/components/views/settings-view';
 export default function Home() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <QueryProvider>
-        <SettingsProvider>
-          <AppShell>
-            <ActiveView />
-          </AppShell>
-        </SettingsProvider>
-      </QueryProvider>
+      <LanguageProvider>
+        <QueryProvider>
+          <SettingsProvider>
+            <AppShell>
+              <ActiveView />
+            </AppShell>
+          </SettingsProvider>
+        </QueryProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

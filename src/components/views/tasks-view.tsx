@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksApi, jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
+import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,10 +30,10 @@ import { toast } from 'sonner';
 import type { Task } from '@/lib/types';
 
 type FilterId = 'all' | 'open' | 'done';
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: 'all',  label: 'All' },
-  { id: 'open', label: 'Open' },
-  { id: 'done', label: 'Done' },
+const FILTERS: { id: FilterId; labelKey: 'all' | 'open' | 'done' }[] = [
+  { id: 'all',  labelKey: 'all' },
+  { id: 'open', labelKey: 'open' },
+  { id: 'done', labelKey: 'done' },
 ];
 
 function matchesFilter(t: Task, f: FilterId): boolean {
@@ -53,6 +54,7 @@ function nextStatus(current: string): string {
 
 export function TasksView() {
   const qc = useQueryClient();
+  const { t, lang } = useLang();
   const [filter, setFilter] = useState<FilterId>('all');
   const [detailId, setDetailId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -73,7 +75,7 @@ export function TasksView() {
   const cycleMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => tasksApi.update(id, { status }),
     onSuccess: (_data, vars) => {
-      toast.success(`Task status: ${vars.status}`);
+      toast.success(t.task_statusCycled(vars.status));
       qc.invalidateQueries({ queryKey: ['tasks'] });
       qc.invalidateQueries({ queryKey: ['metrics'] });
     },
@@ -82,7 +84,7 @@ export function TasksView() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => tasksApi.remove(id),
     onSuccess: () => {
-      toast.success('Task deleted');
+      toast.success(t.task_deleted);
       qc.invalidateQueries({ queryKey: ['tasks'] });
       qc.invalidateQueries({ queryKey: ['metrics'] });
       setDeleteId(null);
@@ -93,11 +95,11 @@ export function TasksView() {
   return (
     <div>
       <PageHeader
-        title="Tasks"
-        subtitle={`${filtered.length} task${filtered.length !== 1 ? 's' : ''}`}
+        title={t.task_title}
+        subtitle={t.task_count(filtered.length)}
         actions={
           <Button onClick={() => { setEditing(null); setFormOpen(true); }} size="sm">
-            <Plus className="size-4 mr-1" /> New Task
+            <Plus className="size-4 mr-1" /> {t.task_new}
           </Button>
         }
       />
@@ -114,7 +116,7 @@ export function TasksView() {
                 : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
             }`}
           >
-            {f.label}
+            {f.labelKey === 'all' ? t.task_filterAll : f.labelKey === 'open' ? t.task_filterOpen : t.task_filterDone}
           </button>
         ))}
       </div>
@@ -124,7 +126,7 @@ export function TasksView() {
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-4xl mb-2 opacity-50">✅</div>
-            <p className="text-sm text-muted-foreground">No tasks in this filter</p>
+            <p className="text-sm text-muted-foreground">{t.task_empty}</p>
           </div>
         ) : (
           filtered.map(t => {
@@ -161,7 +163,7 @@ export function TasksView() {
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                   <span className={`flex items-center gap-1 ${dueColor}`}>
-                    <Calendar className="size-3" />{formatDateRelative(t.dueDate)}
+                    <Calendar className="size-3" />{formatDateRelative(t.dueDate, lang, { today: t.task_today, tomorrow: t.task_tomorrow, yesterday: t.task_yesterday })}
                   </span>
                   {t.notes && <span className="text-muted-foreground truncate">{t.notes}</span>}
                   <button
@@ -188,18 +190,18 @@ export function TasksView() {
                 <SheetDescription>{detail.id}</SheetDescription>
               </SheetHeader>
               <div className="mt-4 space-y-3 text-sm">
-                <Row label="Client" value={detail.client} />
-                <Row label="Job" value={detail.jobId || '—'} />
-                <Row label="Due" value={formatDate(detail.dueDate)} />
-                <Row label="Status" value={<Badge className={taskStatusColor(detail.status)}>{detail.status}</Badge>} />
-                {detail.notes && <Row label="Notes" value={detail.notes} />}
+                <Row label={t.task_client} value={detail.client} />
+                <Row label={t.pay_job} value={detail.jobId || '—'} />
+                <Row label={t.task_dueDate} value={formatDate(detail.dueDate, lang)} />
+                <Row label={t.task_status} value={<Badge className={taskStatusColor(detail.status)}>{detail.status}</Badge>} />
+                {detail.notes && <Row label={t.common_notes} value={detail.notes} />}
               </div>
               <div className="flex gap-2 mt-6">
                 <Button variant="outline" className="flex-1" onClick={() => { setEditing(detail); setDetailId(null); setFormOpen(true); }}>
-                  <Pencil className="size-4 mr-1" /> Edit
+                  <Pencil className="size-4 mr-1" /> {t.common_edit}
                 </Button>
                 <Button variant="destructive" className="flex-1" onClick={() => setDeleteId(detail.id)}>
-                  <Trash2 className="size-4 mr-1" /> Delete
+                  <Trash2 className="size-4 mr-1" /> {t.common_delete}
                 </Button>
               </div>
             </>
@@ -223,16 +225,16 @@ export function TasksView() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this task?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>{t.task_deleteConfirm}</AlertDialogTitle>
+            <AlertDialogDescription>{t.task_deleteConfirmDesc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t.common_cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t.common_delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -259,14 +261,15 @@ function TaskFormDialog({
   task: Task | null;
   onSaved: () => void;
 }) {
+  const { t } = useLang();
   const formKey = task ? `edit-${task.id}` : 'new';
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{task ? 'Edit Task' : 'New Task'}</DialogTitle>
+          <DialogTitle>{task ? t.task_edit : t.task_new}</DialogTitle>
           <DialogDescription>
-            {task ? `Editing ${task.id}` : 'Create a new task'}
+            {task ? t.task_editDesc.replace('{id}', task.id) : t.task_newDesc}
           </DialogDescription>
         </DialogHeader>
         {open && (
@@ -285,6 +288,7 @@ function TaskFormBody({
   onCancel: () => void;
 }) {
   const { lists } = useSettings();
+  const { t } = useLang();
   const { data: jobs = [] } = useQuery({ queryKey: ['jobs'], queryFn: jobsApi.list });
   const [form, setForm] = useState<Partial<Task>>(task ? { ...task } : {
     jobId: '', client: '', task: '', dueDate: '', status: 'OPEN', notes: '',
@@ -308,7 +312,7 @@ function TaskFormBody({
       return tasksApi.create(form);
     },
     onSuccess: () => {
-      toast.success(task ? 'Task updated' : 'Task added');
+      toast.success(task ? t.task_updated : t.task_added);
       onSaved();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -326,77 +330,77 @@ function TaskFormBody({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="tf_jobId">Linked Job (optional)</Label>
+        <Label htmlFor="tf_jobId">{t.task_linkedJob}</Label>
         <Select value={form.jobId || ''} onValueChange={onJobSelected}>
-          <SelectTrigger><SelectValue placeholder="— None (standalone) —" /></SelectTrigger>
-              <SelectContent>
-                {jobs.map(j => (
-                  <SelectItem key={j.id} value={j.id}>
-                    {j.id} — {j.client} ({j.jobType})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SelectTrigger><SelectValue placeholder={t.common_standalone} /></SelectTrigger>
+          <SelectContent>
+            {jobs.map(j => (
+              <SelectItem key={j.id} value={j.id}>
+                {j.id} — {j.client} ({j.jobType})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div>
-            <Label htmlFor="tf_client">Client *</Label>
-            <Input
-              id="tf_client"
-              value={form.client || ''}
-              onChange={(e) => { set('client', e.target.value); setClientError(false); }}
-              className={clientError ? 'border-destructive' : ''}
-              required
-            />
-            {clientError && <p className="text-xs text-destructive mt-1">Client is required</p>}
-          </div>
+      <div>
+        <Label htmlFor="tf_client">{t.task_client} *</Label>
+        <Input
+          id="tf_client"
+          value={form.client || ''}
+          onChange={(e) => { set('client', e.target.value); setClientError(false); }}
+          className={clientError ? 'border-destructive' : ''}
+          required
+        />
+        {clientError && <p className="text-xs text-destructive mt-1">{t.task_clientError}</p>}
+      </div>
 
-          <div>
-            <Label htmlFor="tf_task">Task *</Label>
-            <Input
-              id="tf_task"
-              value={form.task || ''}
-              onChange={(e) => { set('task', e.target.value); setTaskError(false); }}
-              className={taskError ? 'border-destructive' : ''}
-              placeholder="Task description"
-              required
-            />
-            {taskError && <p className="text-xs text-destructive mt-1">Task description is required</p>}
-          </div>
+      <div>
+        <Label htmlFor="tf_task">{t.task_task} *</Label>
+        <Input
+          id="tf_task"
+          value={form.task || ''}
+          onChange={(e) => { set('task', e.target.value); setTaskError(false); }}
+          className={taskError ? 'border-destructive' : ''}
+          placeholder={t.task_task}
+          required
+        />
+        {taskError && <p className="text-xs text-destructive mt-1">{t.task_taskError}</p>}
+      </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="tf_dueDate">Due Date *</Label>
-              <Input
-                id="tf_dueDate"
-                type="date"
-                value={toDateInput(form.dueDate)}
-                onChange={(e) => set('dueDate', fromDateInput(e.target.value) || '')}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="tf_status">Status</Label>
-              <Select value={form.status || 'OPEN'} onValueChange={(v) => set('status', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(lists?.taskStatuses || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="tf_dueDate">{t.task_dueDate} *</Label>
+          <Input
+            id="tf_dueDate"
+            type="date"
+            value={toDateInput(form.dueDate)}
+            onChange={(e) => set('dueDate', fromDateInput(e.target.value) || '')}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="tf_status">{t.task_status}</Label>
+          <Select value={form.status || 'OPEN'} onValueChange={(v) => set('status', v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(lists?.taskStatuses || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-          <div>
-            <Label htmlFor="tf_notes">Notes</Label>
-            <Textarea id="tf_notes" value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} rows={2} />
-          </div>
+      <div>
+        <Label htmlFor="tf_notes">{t.common_notes}</Label>
+        <Textarea id="tf_notes" value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} rows={2} />
+      </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving...' : (task ? 'Update Task' : 'Save Task')}
-            </Button>
-          </DialogFooter>
-        </form>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>{t.common_cancel}</Button>
+        <Button type="submit" disabled={saveMutation.isPending}>
+          {saveMutation.isPending ? t.common_saving : (task ? t.task_update : t.task_save)}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

@@ -1,37 +1,39 @@
 'use client';
 
 import { useAppStore } from '@/lib/store';
+import { useLang } from '@/components/language-provider';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Briefcase, Wallet, CheckSquare, Calculator, Settings, Moon, Sun } from 'lucide-react';
 import type { ViewKey } from '@/lib/types';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 
-const NAV_ITEMS: { key: ViewKey; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'jobs', label: 'Jobs', icon: Briefcase },
-  { key: 'payments', label: 'Payments', icon: Wallet },
-  { key: 'tasks', label: 'Tasks', icon: CheckSquare },
-  { key: 'wages', label: 'Wages', icon: Calculator },
-  { key: 'settings', label: 'Settings', icon: Settings },
-];
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   const view = useAppStore(s => s.view);
   const setView = useAppStore(s => s.setView);
   const { theme, setTheme } = useTheme();
+  const { t } = useLang();
+
+  const NAV_ITEMS: { key: ViewKey; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { key: 'dashboard', label: t.nav_dashboard, icon: LayoutDashboard },
+    { key: 'jobs',      label: t.nav_jobs,      icon: Briefcase },
+    { key: 'payments',  label: t.nav_payments,  icon: Wallet },
+    { key: 'tasks',     label: t.nav_tasks,     icon: CheckSquare },
+    { key: 'wages',     label: t.nav_wages,     icon: Calculator },
+    { key: 'settings',  label: t.nav_settings,  icon: Settings },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
       {/* ── Desktop Sidebar (md+) ── */}
       <aside className="hidden md:flex md:flex-col md:w-60 md:fixed md:inset-y-0 border-r border-border bg-sidebar">
         <div className="flex items-center gap-2 px-5 py-5 border-b border-border">
-          <div className="size-9 rounded-lg bg-primary/15 flex items-center justify-center">
+          <div className="size-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
             <Calculator className="size-5 text-primary" />
           </div>
-          <div>
-            <div className="font-bold text-sm leading-tight">PhotoTrack</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Photography Tracker</div>
+          <div className="min-w-0">
+            <div className="font-bold text-sm leading-tight truncate">Photography Client</div>
+            <div className="font-bold text-sm leading-tight truncate">Management</div>
           </div>
         </div>
 
@@ -65,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="w-full justify-start gap-3"
           >
             {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            Toggle theme
+            {theme === 'dark' ? 'Light' : 'Dark'}
           </Button>
         </div>
       </aside>
@@ -105,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           >
             <Settings className="size-5" />
-            Settings
+            {t.nav_settings}
           </button>
         </div>
       </nav>

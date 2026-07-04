@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
+import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,11 +31,11 @@ import { toast } from 'sonner';
 import type { Job } from '@/lib/types';
 
 type FilterId = 'all' | 'active' | 'editing' | 'done';
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: 'all',     label: 'All' },
-  { id: 'active',  label: 'Active' },
-  { id: 'editing', label: 'Editing' },
-  { id: 'done',    label: 'Done / Cancelled' },
+const FILTERS: { id: FilterId; labelKey: 'all' | 'active' | 'editing' | 'done' }[] = [
+  { id: 'all',     labelKey: 'all' },
+  { id: 'active',  labelKey: 'active' },
+  { id: 'editing', labelKey: 'editing' },
+  { id: 'done',    labelKey: 'done' },
 ];
 
 function matchesFilter(job: Job, f: FilterId): boolean {
@@ -49,6 +50,7 @@ function matchesFilter(job: Job, f: FilterId): boolean {
 export function JobsView() {
   const qc = useQueryClient();
   const { lists } = useSettings();
+  const { t, lang } = useLang();
   const [filter, setFilter] = useState<FilterId>('all');
   const [search, setSearch] = useState('');
   const [detailJobId, setDetailJobId] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function JobsView() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => jobsApi.remove(id),
     onSuccess: () => {
-      toast.success('Job deleted');
+      toast.success(t.jobs_deleted);
       qc.invalidateQueries({ queryKey: ['jobs'] });
       qc.invalidateQueries({ queryKey: ['metrics'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
@@ -95,11 +97,11 @@ export function JobsView() {
   return (
     <div>
       <PageHeader
-        title="Jobs"
-        subtitle={`${filtered.length} job${filtered.length !== 1 ? 's' : ''}`}
+        title={t.jobs_title}
+        subtitle={t.jobs_count(filtered.length)}
         actions={
           <Button onClick={() => { setEditing(null); setFormOpen(true); }} size="sm">
-            <Plus className="size-4 mr-1" /> New Job
+            <Plus className="size-4 mr-1" /> {t.jobs_new}
           </Button>
         }
       />
@@ -116,7 +118,13 @@ export function JobsView() {
                 : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
             }`}
           >
-            {f.label}
+            {f.labelKey === 'all'
+              ? t.jobs_filterAll
+              : f.labelKey === 'active'
+                ? t.jobs_filterActive
+                : f.labelKey === 'editing'
+                  ? t.jobs_filterEditing
+                  : t.jobs_filterDone}
           </button>
         ))}
       </div>
@@ -125,7 +133,7 @@ export function JobsView() {
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
-          placeholder="Search by client, type, location, team, or ID..."
+          placeholder={t.jobs_search}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -137,7 +145,7 @@ export function JobsView() {
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-4xl mb-2 opacity-50">📭</div>
-            <p className="text-sm text-muted-foreground">No jobs in this filter</p>
+            <p className="text-sm text-muted-foreground">{t.jobs_empty}</p>
           </div>
         ) : (
           filtered.map(job => (
@@ -150,7 +158,7 @@ export function JobsView() {
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold truncate">{job.client}</div>
                   <div className="text-xs text-muted-foreground truncate">
-                    {job.jobType} · {formatDate(job.jobDate)}
+                    {job.jobType} · {formatDate(job.jobDate, lang)}
                   </div>
                 </div>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${jobStatusColor(job.status)}`}>
@@ -184,39 +192,39 @@ export function JobsView() {
               </SheetHeader>
 
               <div className="mt-4 space-y-4">
-                <DetailSection title="Job Info">
+                <DetailSection title={t.jobs_jobInfo}>
                   <DetailRow label="Job ID" value={detail.job.id} />
-                  <DetailRow label="Type" value={detail.job.jobType} />
-                  <DetailRow label="Date" value={formatDate(detail.job.jobDate)} />
-                  <DetailRow label="Location" value={detail.job.location || '—'} />
-                  <DetailRow label="Status" value={<Badge className={jobStatusColor(detail.job.status)}>{detail.job.status}</Badge>} />
-                  <DetailRow label="Client Source" value={detail.job.clientSource || '—'} />
-                  {detail.job.phone && <DetailRow label="Phone" value={<span className="flex items-center gap-1"><Phone className="size-3" />{detail.job.phone}</span>} />}
+                  <DetailRow label={t.jobs_jobType} value={detail.job.jobType} />
+                  <DetailRow label={t.jobs_jobDate} value={formatDate(detail.job.jobDate, lang)} />
+                  <DetailRow label={t.jobs_location} value={detail.job.location || '—'} />
+                  <DetailRow label={t.jobs_status} value={<Badge className={jobStatusColor(detail.job.status)}>{detail.job.status}</Badge>} />
+                  <DetailRow label={t.jobs_clientSource} value={detail.job.clientSource || '—'} />
+                  {detail.job.phone && <DetailRow label={t.jobs_phone} value={<span className="flex items-center gap-1"><Phone className="size-3" />{detail.job.phone}</span>} />}
                 </DetailSection>
 
-                <DetailSection title="Financial">
-                  <DetailRow label="Total Fee" value={formatCurrency(detail.job.totalFee)} />
-                  <DetailRow label="Deposit" value={formatCurrency(detail.job.deposit)} />
-                  <DetailRow label="Balance" value={<span className="text-red-500 font-semibold">{formatCurrency(detail.job.balance)}</span>} />
-                  <DetailRow label="Payment Status" value={<Badge className={paymentStatusColor(detail.job.paymentStatus)}>{detail.job.paymentStatus}</Badge>} />
+                <DetailSection title={t.jobs_financial}>
+                  <DetailRow label={t.jobs_totalFee} value={formatCurrency(detail.job.totalFee)} />
+                  <DetailRow label={t.jobs_deposit} value={formatCurrency(detail.job.deposit)} />
+                  <DetailRow label={t.jobs_balance} value={<span className="text-red-500 font-semibold">{formatCurrency(detail.job.balance)}</span>} />
+                  <DetailRow label={t.jobs_paymentStatus} value={<Badge className={paymentStatusColor(detail.job.paymentStatus)}>{detail.job.paymentStatus}</Badge>} />
                 </DetailSection>
 
-                <DetailSection title="Team">
-                  <DetailRow label="Photographer(s)" value={detail.job.photographers || '—'} />
-                  <DetailRow label="Editor(s)" value={detail.job.editors || '—'} />
+                <DetailSection title={t.jobs_team}>
+                  <DetailRow label={t.jobs_photographers} value={detail.job.photographers || '—'} />
+                  <DetailRow label={t.jobs_editors} value={detail.job.editors || '—'} />
                 </DetailSection>
 
                 {detail.job.notes && (
-                  <DetailSection title="Notes">
+                  <DetailSection title={t.common_notes}>
                     <p className="text-sm text-muted-foreground">{detail.job.notes}</p>
                   </DetailSection>
                 )}
 
                 {detail.payments.length > 0 && (
-                  <DetailSection title={`Payments (${detail.payments.length})`}>
+                  <DetailSection title={t.jobs_payments(detail.payments.length)}>
                     {detail.payments.map(p => (
                       <div key={p.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
-                        <span>{formatDate(p.paymentDate)} · {p.method}</span>
+                        <span>{formatDate(p.paymentDate, lang)} · {p.method}</span>
                         <span className="font-medium">{formatCurrency(p.amount)}</span>
                       </div>
                     ))}
@@ -224,14 +232,14 @@ export function JobsView() {
                 )}
 
                 {detail.tasks.length > 0 && (
-                  <DetailSection title={`Tasks (${detail.tasks.length})`}>
-                    {detail.tasks.map(t => (
-                      <div key={t.id} className="flex justify-between items-center text-sm py-1 border-b border-border last:border-0">
+                  <DetailSection title={t.jobs_tasks(detail.tasks.length)}>
+                    {detail.tasks.map(tsk => (
+                      <div key={tsk.id} className="flex justify-between items-center text-sm py-1 border-b border-border last:border-0">
                         <div>
-                          <div>{t.task}</div>
-                          <div className="text-xs text-muted-foreground">Due {formatDate(t.dueDate)}</div>
+                          <div>{tsk.task}</div>
+                          <div className="text-xs text-muted-foreground">{t.task_dueDate} {formatDate(tsk.dueDate, lang)}</div>
                         </div>
-                        <Badge className={`text-xs ${paymentStatusColor(t.status)}`}>{t.status}</Badge>
+                        <Badge className={`text-xs ${paymentStatusColor(tsk.status)}`}>{tsk.status}</Badge>
                       </div>
                     ))}
                   </DetailSection>
@@ -247,14 +255,14 @@ export function JobsView() {
                       setFormOpen(true);
                     }}
                   >
-                    <Pencil className="size-4 mr-1" /> Edit
+                    <Pencil className="size-4 mr-1" /> {t.common_edit}
                   </Button>
                   <Button
                     variant="destructive"
                     className="flex-1"
                     onClick={() => setDeleteId(detail.job.id)}
                   >
-                    <Trash2 className="size-4 mr-1" /> Delete
+                    <Trash2 className="size-4 mr-1" /> {t.common_delete}
                   </Button>
                 </div>
               </div>
@@ -280,18 +288,18 @@ export function JobsView() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this job?</AlertDialogTitle>
+            <AlertDialogTitle>{t.jobs_deleteConfirm}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the job along with its related payments, tasks, and wage distributions. This action cannot be undone.
+              {t.jobs_deleteConfirmDesc}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t.common_cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t.common_delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -328,6 +336,7 @@ function JobFormDialog({
   lists: ReturnType<typeof useSettings>['lists'];
   onSaved: () => void;
 }) {
+  const { t } = useLang();
   // Key forces remount when opening for a different job (or new) so useState initializes fresh
   const formKey = job ? `edit-${job.id}` : 'new';
 
@@ -335,9 +344,9 @@ function JobFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{job ? 'Edit Job' : 'New Job'}</DialogTitle>
+          <DialogTitle>{job ? t.jobs_edit : t.jobs_new}</DialogTitle>
           <DialogDescription>
-            {job ? `Editing ${job.id}` : 'Add a new photography job'}
+            {job ? t.jobs_editDesc.replace('{id}', job.id) : t.jobs_newDesc}
           </DialogDescription>
         </DialogHeader>
         {open && (
@@ -356,6 +365,7 @@ function JobFormBody({
   onSaved: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useLang();
   const [form, setForm] = useState<Partial<Job>>(job ? { ...job } : {
     client: '', phone: '', jobType: lists?.jobTypes[0] || 'Wedding',
     jobDate: '', location: '', status: 'Inquiry', paymentStatus: 'UNPAID',
@@ -377,7 +387,7 @@ function JobFormBody({
       return jobsApi.create(payload);
     },
     onSuccess: () => {
-      toast.success(job ? 'Job updated' : 'Job added');
+      toast.success(job ? t.jobs_updated : t.jobs_added);
       onSaved();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -396,119 +406,119 @@ function JobFormBody({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="f_client">Client *</Label>
+        <Label htmlFor="f_client">{t.jobs_client} *</Label>
         <Input
           id="f_client"
           value={form.client || ''}
           onChange={(e) => { set('client', e.target.value); setClientError(false); }}
           className={clientError ? 'border-destructive' : ''}
-          placeholder="Client name"
+          placeholder={t.jobs_client}
           required
         />
-        {clientError && <p className="text-xs text-destructive mt-1">Client name is required</p>}
+        {clientError && <p className="text-xs text-destructive mt-1">{t.jobs_clientError}</p>}
       </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="f_phone">Phone</Label>
-              <Input id="f_phone" value={form.phone || ''} onChange={(e) => set('phone', e.target.value)} placeholder="Phone number" />
-            </div>
-            <div>
-              <Label htmlFor="f_jobType">Job Type *</Label>
-              <Select value={form.jobType || ''} onValueChange={(v) => set('jobType', v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {(lists?.jobTypes || []).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="f_phone">{t.jobs_phone}</Label>
+          <Input id="f_phone" value={form.phone || ''} onChange={(e) => set('phone', e.target.value)} placeholder={t.jobs_phone} />
+        </div>
+        <div>
+          <Label htmlFor="f_jobType">{t.jobs_jobType} *</Label>
+          <Select value={form.jobType || ''} onValueChange={(v) => set('jobType', v)}>
+            <SelectTrigger><SelectValue placeholder={t.common_select} /></SelectTrigger>
+            <SelectContent>
+              {(lists?.jobTypes || []).map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="f_jobDate">Job Date *</Label>
-              <Input
-                id="f_jobDate"
-                type="date"
-                value={toDateInput(form.jobDate)}
-                onChange={(e) => set('jobDate', fromDateInput(e.target.value) || '')}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="f_status">Status *</Label>
-              <Select value={form.status || ''} onValueChange={(v) => set('status', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(lists?.jobStatuses || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="f_jobDate">{t.jobs_jobDate} *</Label>
+          <Input
+            id="f_jobDate"
+            type="date"
+            value={toDateInput(form.jobDate)}
+            onChange={(e) => set('jobDate', fromDateInput(e.target.value) || '')}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="f_status">{t.jobs_status} *</Label>
+          <Select value={form.status || ''} onValueChange={(v) => set('status', v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(lists?.jobStatuses || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-          <div>
-            <Label htmlFor="f_location">Location</Label>
-            <Input id="f_location" value={form.location || ''} onChange={(e) => set('location', e.target.value)} placeholder="Location" />
-          </div>
+      <div>
+        <Label htmlFor="f_location">{t.jobs_location}</Label>
+        <Input id="f_location" value={form.location || ''} onChange={(e) => set('location', e.target.value)} placeholder={t.jobs_location} />
+      </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="f_totalFee">Total Fee *</Label>
-              <Input id="f_totalFee" type="number" min={0} value={form.totalFee ?? ''} onChange={(e) => set('totalFee', Number(e.target.value))} required />
-            </div>
-            <div>
-              <Label htmlFor="f_deposit">Deposit</Label>
-              <Input id="f_deposit" type="number" min={0} value={form.deposit ?? 0} onChange={(e) => set('deposit', Number(e.target.value))} />
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="f_totalFee">{t.jobs_totalFee} *</Label>
+          <Input id="f_totalFee" type="number" min={0} value={form.totalFee ?? ''} onChange={(e) => set('totalFee', Number(e.target.value))} required />
+        </div>
+        <div>
+          <Label htmlFor="f_deposit">{t.jobs_deposit}</Label>
+          <Input id="f_deposit" type="number" min={0} value={form.deposit ?? 0} onChange={(e) => set('deposit', Number(e.target.value))} />
+        </div>
+      </div>
 
-          <div>
-            <Label>Balance</Label>
-            <div className="px-3 py-2 rounded-md bg-muted text-muted-foreground text-sm">{formatCurrency(balance)}</div>
-          </div>
+      <div>
+        <Label>{t.jobs_balance}</Label>
+        <div className="px-3 py-2 rounded-md bg-muted text-muted-foreground text-sm">{formatCurrency(balance)}</div>
+      </div>
 
-          <div>
-            <Label htmlFor="f_paymentStatus">Payment Status</Label>
-            <Select value={form.paymentStatus || ''} onValueChange={(v) => set('paymentStatus', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(lists?.paymentStatuses || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+      <div>
+        <Label htmlFor="f_paymentStatus">{t.jobs_paymentStatus}</Label>
+        <Select value={form.paymentStatus || ''} onValueChange={(v) => set('paymentStatus', v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {(lists?.paymentStatuses || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="f_photographers">Photographer(s)</Label>
-              <Input id="f_photographers" value={form.photographers || ''} onChange={(e) => set('photographers', e.target.value)} placeholder="e.g. Gege, Sude" />
-            </div>
-            <div>
-              <Label htmlFor="f_editors">Editor(s)</Label>
-              <Input id="f_editors" value={form.editors || ''} onChange={(e) => set('editors', e.target.value)} placeholder="e.g. Gege" />
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="f_photographers">{t.jobs_photographers}</Label>
+          <Input id="f_photographers" value={form.photographers || ''} onChange={(e) => set('photographers', e.target.value)} placeholder="e.g. Gege, Sude" />
+        </div>
+        <div>
+          <Label htmlFor="f_editors">{t.jobs_editors}</Label>
+          <Input id="f_editors" value={form.editors || ''} onChange={(e) => set('editors', e.target.value)} placeholder="e.g. Gege" />
+        </div>
+      </div>
 
-          <div>
-            <Label htmlFor="f_clientSource">Client Source</Label>
-            <Select value={form.clientSource || ''} onValueChange={(v) => set('clientSource', v)}>
-              <SelectTrigger><SelectValue placeholder="— Select —" /></SelectTrigger>
-              <SelectContent>
-                {(lists?.clientSources || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+      <div>
+        <Label htmlFor="f_clientSource">{t.jobs_clientSource}</Label>
+        <Select value={form.clientSource || ''} onValueChange={(v) => set('clientSource', v)}>
+          <SelectTrigger><SelectValue placeholder={`— ${t.common_select} —`} /></SelectTrigger>
+          <SelectContent>
+            {(lists?.clientSources || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div>
-            <Label htmlFor="f_notes">Notes</Label>
-            <Textarea id="f_notes" value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} placeholder="Additional notes" rows={3} />
-          </div>
+      <div>
+        <Label htmlFor="f_notes">{t.common_notes}</Label>
+        <Textarea id="f_notes" value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} placeholder={t.common_notes} rows={3} />
+      </div>
 
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving...' : (job ? 'Update Job' : 'Save Job')}
-            </Button>
-          </DialogFooter>
-        </form>
+      <DialogFooter className="pt-2">
+        <Button type="button" variant="outline" onClick={onCancel}>{t.common_cancel}</Button>
+        <Button type="submit" disabled={saveMutation.isPending}>
+          {saveMutation.isPending ? t.common_saving : (job ? t.jobs_update : t.jobs_save)}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

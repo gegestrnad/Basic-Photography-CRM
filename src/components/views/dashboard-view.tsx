@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { metricsApi, jobsApi, paymentsApi, tasksApi, wagesApi } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
+import { useLang } from '@/components/language-provider';
 import { PageHeader, SectionTitle } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import type { ViewKey } from '@/lib/types';
 
 export function DashboardView() {
   const setView = useAppStore(s => s.setView);
+  const { t, lang } = useLang();
   const { data: metrics } = useQuery({ queryKey: ['metrics'], queryFn: metricsApi.get });
   const { data: jobs } = useQuery({ queryKey: ['jobs'], queryFn: jobsApi.list });
   const { data: payments } = useQuery({ queryKey: ['payments'], queryFn: paymentsApi.list });
@@ -26,7 +28,7 @@ export function DashboardView() {
   const { data: wages } = useQuery({ queryKey: ['wages'], queryFn: wagesApi.list });
 
   const today = new Date();
-  const todayLabel = today.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const todayLabel = today.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
   const m = metrics || {
     activeJobs: 0, upcomingActiveJobs: 0, jobsInEditing: 0, outstandingBalance: 0,
@@ -39,7 +41,7 @@ export function DashboardView() {
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const label = d.toLocaleDateString('en-US', { month: 'short' });
+      const label = d.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' });
       const value = (payments || [])
         .filter(p => p.status === 'PAID')
         .filter(p => {
@@ -73,25 +75,25 @@ export function DashboardView() {
   const workflow = ['Inquiry','Booked','Shot','Editing','Ready','Delivered','Completed'];
 
   const metricCards = [
-    { label: 'Active Jobs',       value: m.activeJobs,                  icon: Briefcase,     color: 'text-emerald-500', zero: 'text-muted-foreground' },
-    { label: 'Upcoming Active',   value: m.upcomingActiveJobs,           icon: CalendarClock, color: 'text-blue-500',     zero: 'text-muted-foreground' },
-    { label: 'In Editing',        value: m.jobsInEditing,                icon: Scissors,      color: 'text-fuchsia-500',  zero: 'text-muted-foreground' },
-    { label: 'Outstanding Bal.',  value: formatCurrency(m.outstandingBalance), icon: AlertCircle, color: 'text-red-500', zero: 'text-muted-foreground' },
-    { label: 'Open Tasks',        value: m.openTasks,                    icon: CheckSquare,   color: 'text-blue-500',     zero: 'text-muted-foreground' },
-    { label: 'Overdue Tasks',     value: m.overdueOpenTasks,             icon: AlertTriangle, color: 'text-red-500',      zero: 'text-muted-foreground' },
+    { label: t.dash_activeJobs,      value: m.activeJobs,                  icon: Briefcase,     color: 'text-emerald-500', zero: 'text-muted-foreground' },
+    { label: t.dash_upcomingActive,  value: m.upcomingActiveJobs,           icon: CalendarClock, color: 'text-blue-500',     zero: 'text-muted-foreground' },
+    { label: t.dash_inEditing,       value: m.jobsInEditing,                icon: Scissors,      color: 'text-fuchsia-500',  zero: 'text-muted-foreground' },
+    { label: t.dash_outstandingBal,  value: formatCurrency(m.outstandingBalance), icon: AlertCircle, color: 'text-red-500', zero: 'text-muted-foreground' },
+    { label: t.dash_openTasks,       value: m.openTasks,                    icon: CheckSquare,   color: 'text-blue-500',     zero: 'text-muted-foreground' },
+    { label: t.dash_overdueTasks,    value: m.overdueOpenTasks,             icon: AlertTriangle, color: 'text-red-500',      zero: 'text-muted-foreground' },
   ];
 
   const quickLinks: { view: ViewKey; label: string; count: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { view: 'jobs',     label: 'Jobs',          count: `${jobs?.length ?? 0} job${(jobs?.length ?? 0) !== 1 ? 's' : ''}`,      icon: Briefcase },
-    { view: 'jobs',     label: 'Editing Queue', count: `${m.jobsInEditing} job${m.jobsInEditing !== 1 ? 's' : ''}`,           icon: Scissors },
-    { view: 'payments', label: 'Payments',      count: `${payments?.length ?? 0} payment${(payments?.length ?? 0) !== 1 ? 's' : ''}`, icon: Wallet },
-    { view: 'tasks',    label: 'Open Tasks',    count: `${m.openTasks} open`,                                                              icon: CheckSquare2 },
-    { view: 'wages',    label: 'Wages',         count: `${m.totalWageRecords} distribution${m.totalWageRecords !== 1 ? 's' : ''}`,          icon: Calculator },
+    { view: 'jobs',     label: t.nav_jobs,         count: t.jobs_count(jobs?.length ?? 0),           icon: Briefcase },
+    { view: 'jobs',     label: t.dash_editingQueue, count: t.jobs_count(m.jobsInEditing),            icon: Scissors },
+    { view: 'payments', label: t.nav_payments,     count: t.pay_count(payments?.length ?? 0),         icon: Wallet },
+    { view: 'tasks',    label: t.dash_openTasksCount, count: `${m.openTasks} ${lang === 'id' ? 'terbuka' : 'open'}`, icon: CheckSquare2 },
+    { view: 'wages',    label: t.nav_wages,        count: `${m.totalWageRecords} ${lang === 'id' ? 'distribusi' : 'distribution'}${m.totalWageRecords !== 1 ? 's' : ''}`, icon: Calculator },
   ];
 
   return (
     <div>
-      <PageHeader title="Dashboard" subtitle={todayLabel} />
+      <PageHeader title={t.dash_title} subtitle={todayLabel} />
 
       {/* ── Metric Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -103,7 +105,7 @@ export function DashboardView() {
             <Card key={mc.label}>
               <CardContent className="p-4 flex flex-col items-center text-center">
                 <Icon className={`size-5 mb-2 ${isZero || isZeroCurrency ? mc.zero : mc.color}`} />
-                <div className={`text-2xl md:text-3xl font-bold leading-none ${isZero || isZeroCurrency ? mc.zero : mc.color}`}>
+                <div className={`text-xl md:text-2xl font-bold leading-none tabular-nums break-all ${isZero || isZeroCurrency ? mc.zero : mc.color}`}>
                   {mc.value}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1.5">
@@ -116,7 +118,7 @@ export function DashboardView() {
       </div>
 
       {/* ── Quick Links ── */}
-      <SectionTitle>Quick Views</SectionTitle>
+      <SectionTitle>{t.dash_quickViews}</SectionTitle>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {quickLinks.map((q, idx) => {
           const Icon = q.icon;
@@ -135,13 +137,13 @@ export function DashboardView() {
       </div>
 
       {/* ── Charts ── */}
-      <SectionTitle>Analytics</SectionTitle>
+      <SectionTitle>{t.dash_analytics}</SectionTitle>
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="size-4 text-primary" />
-              Revenue (last 6 months)
+              {t.dash_revenueChart}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -168,11 +170,11 @@ export function DashboardView() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Job Status Distribution</CardTitle>
+            <CardTitle className="text-base">{t.dash_statusChart}</CardTitle>
           </CardHeader>
           <CardContent>
             {statusDistribution.length === 0 ? (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No jobs yet</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">{t.dash_noJobs}</div>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -191,7 +193,7 @@ export function DashboardView() {
       </div>
 
       {/* ── Workflow ── */}
-      <SectionTitle>Job Status Workflow</SectionTitle>
+      <SectionTitle>{t.dash_workflow}</SectionTitle>
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -208,7 +210,7 @@ export function DashboardView() {
       </Card>
 
       {/* ── Recent Jobs ── */}
-      <SectionTitle>Recent Jobs</SectionTitle>
+      <SectionTitle>{t.dash_recentJobs}</SectionTitle>
       <div className="space-y-2">
         {(jobs || []).slice(0, 5).map(job => (
           <button
@@ -219,7 +221,7 @@ export function DashboardView() {
             <div className="min-w-0 flex-1">
               <div className="font-medium text-sm truncate">{job.client}</div>
               <div className="text-xs text-muted-foreground truncate">
-                {job.jobType} · {formatDate(job.jobDate)}{job.location ? ` · ${job.location}` : ''}
+                {job.jobType} · {formatDate(job.jobDate, lang)}{job.location ? ` · ${job.location}` : ''}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -233,7 +235,7 @@ export function DashboardView() {
           </button>
         ))}
         {(jobs || []).length === 0 && (
-          <div className="text-center py-10 text-sm text-muted-foreground">No jobs yet</div>
+          <div className="text-center py-10 text-sm text-muted-foreground">{t.dash_noJobs}</div>
         )}
       </div>
     </div>

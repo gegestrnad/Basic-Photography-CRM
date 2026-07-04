@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { settingsApi, backupApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
+import { useLang } from '@/components/language-provider';
 import { useAppStore } from '@/lib/store';
 import { PageHeader, SectionTitle } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +37,7 @@ const LIST_KEYS: { key: keyof Lists; label: string }[] = [
 export function SettingsView() {
   const qc = useQueryClient();
   const { lists, wageRules, staff, wageConfig, reload } = useSettings();
+  const { t, lang, setLang } = useLang();
   const { theme, setTheme } = useTheme();
   const triggerListsReload = useAppStore(s => s.triggerListsReload);
 
@@ -71,7 +73,7 @@ export function SettingsView() {
         staff: editStaff,
         wageConfig: { distributableRatio: editRatio, defaultExpenses: editExpenses },
       });
-      toast.success('Settings saved');
+      toast.success(t.set_saved);
       setSyncedFor(null); // force re-sync from server
       reload();
       triggerListsReload();
@@ -100,7 +102,7 @@ export function SettingsView() {
     try {
       const data = JSON.parse(importData);
       await backupApi.import(data);
-      toast.success('Data imported successfully');
+      toast.success(t.set_importSuccess);
       setImportOpen(false);
       setImportData('');
       setSyncedFor(null);
@@ -108,7 +110,7 @@ export function SettingsView() {
       triggerListsReload();
       qc.invalidateQueries();
     } catch (e: any) {
-      toast.error('Import failed: ' + e.message);
+      toast.error(t.set_importFailed(e.message));
     }
   };
 
@@ -127,32 +129,47 @@ export function SettingsView() {
   return (
     <div>
       <PageHeader
-        title="Settings"
-        subtitle="Manage lists, wage rules, staff, and backups"
+        title={t.set_title}
+        subtitle={t.set_subtitle}
         actions={
           <Button onClick={saveAll} size="sm">
-            <Save className="size-4 mr-1" /> Save All
+            <Save className="size-4 mr-1" /> {t.set_saveAll}
           </Button>
         }
       />
 
-      {/* Theme */}
-      <SectionTitle>Appearance</SectionTitle>
+      {/* Theme + Language */}
+      <SectionTitle>{t.set_appearance}</SectionTitle>
       <Card>
         <CardContent className="p-4 flex items-center justify-between">
           <div>
-            <div className="font-medium">Theme</div>
-            <div className="text-sm text-muted-foreground">Toggle dark / light mode</div>
+            <div className="font-medium">{t.set_theme}</div>
+            <div className="text-sm text-muted-foreground">{t.set_themeDesc}</div>
           </div>
           <Button variant="outline" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
             {theme === 'dark' ? <Sun className="size-4 mr-1" /> : <Moon className="size-4 mr-1" />}
-            {theme === 'dark' ? 'Light' : 'Dark'}
+            {theme === 'dark' ? (lang === 'id' ? 'Terang' : 'Light') : (lang === 'id' ? 'Gelap' : 'Dark')}
           </Button>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-medium">{t.set_language}</div>
+            <div className="text-sm text-muted-foreground">{t.set_languageDesc}</div>
+          </div>
+          <Select value={lang} onValueChange={(v) => setLang(v as 'en' | 'id')}>
+            <SelectTrigger className="w-40 shrink-0"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="id">Bahasa Indonesia</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
       {/* Lists Management */}
-      <SectionTitle>Dropdown Lists</SectionTitle>
+      <SectionTitle>{t.set_dropdownLists}</SectionTitle>
       {editLists && (
         <div className="grid md:grid-cols-2 gap-4">
           {LIST_KEYS.map(({ key, label }) => (
@@ -200,13 +217,13 @@ export function SettingsView() {
       )}
 
       {/* Wage Rules */}
-      <SectionTitle>Wage Rules (Role Percentages)</SectionTitle>
+      <SectionTitle>{t.set_wageRules}</SectionTitle>
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total:</span>
+            <span className="text-muted-foreground">{t.set_totalPercent}</span>
             <Badge className={Math.abs(totalRulePct - 1) < 0.001 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'}>
-              {(totalRulePct * 100).toFixed(1)}% {Math.abs(totalRulePct - 1) < 0.001 ? '✓' : '⚠ should be 100%'}
+              {(totalRulePct * 100).toFixed(1)}% {Math.abs(totalRulePct - 1) < 0.001 ? '✓' : `⚠ ${t.set_shouldBe100}`}
             </Badge>
           </div>
           <div className="space-y-1.5">
@@ -235,12 +252,12 @@ export function SettingsView() {
           </div>
           <Button size="sm" variant="ghost" className="w-full h-8 text-xs"
             onClick={() => setEditRules(prev => [...prev, { id: '', role: '', percentage: 0, sortOrder: prev.length }])}>
-            <Plus className="size-3 mr-1" /> Add Rule
+            <Plus className="size-3 mr-1" /> {t.set_addRule}
           </Button>
 
           <div className="pt-3 border-t border-border space-y-2">
-            <Label className="text-xs uppercase tracking-wider">Default Operational Expense Templates</Label>
-            <p className="text-xs text-muted-foreground">Pre-populated when calculating wages for a new job.</p>
+            <Label className="text-xs uppercase tracking-wider">{t.set_defaultExpenses}</Label>
+            <p className="text-xs text-muted-foreground">{t.set_defaultExpensesHint}</p>
             {editExpenses.map((e, i) => (
               <div key={i} className="flex gap-1.5">
                 <Input
@@ -257,11 +274,11 @@ export function SettingsView() {
             ))}
             <Button size="sm" variant="ghost" className="w-full h-8 text-xs"
               onClick={() => setEditExpenses(prev => [...prev, { name: '', amount: 0 }])}>
-              <Plus className="size-3 mr-1" /> Add Expense Template
+              <Plus className="size-3 mr-1" /> {t.set_addExpenseTpl}
             </Button>
 
             <div className="flex items-center gap-2 pt-2">
-              <Label className="text-sm whitespace-nowrap">Fallback ratio:</Label>
+              <Label className="text-sm whitespace-nowrap">{t.set_fallbackRatio}</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -272,7 +289,7 @@ export function SettingsView() {
                 className="h-8 text-sm w-24"
               />
               <span className="text-xs text-muted-foreground">
-                Used when no operational expenses are entered ({Math.round(editRatio * 100)}%)
+                {t.set_fallbackRatioHint(Math.round(editRatio * 100))}
               </span>
             </div>
           </div>
@@ -280,7 +297,7 @@ export function SettingsView() {
       </Card>
 
       {/* Staff Management */}
-      <SectionTitle>Staff & Roles</SectionTitle>
+      <SectionTitle>{t.set_staffRoles}</SectionTitle>
       <Card>
         <CardContent className="p-4 space-y-2">
           {editStaff.map((s, i) => (
@@ -289,19 +306,19 @@ export function SettingsView() {
                 <Input
                   value={s.name}
                   onChange={(e) => setEditStaff(prev => prev.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
-                  placeholder="Name"
+                  placeholder={t.set_name}
                   className="h-8 text-sm flex-1"
                 />
                 <Input
                   value={s.primaryRole}
                   onChange={(e) => setEditStaff(prev => prev.map((x, idx) => idx === i ? { ...x, primaryRole: e.target.value } : x))}
-                  placeholder="Primary role"
+                  placeholder={t.set_primaryRole}
                   className="h-8 text-sm flex-1"
                 />
                 <Input
                   value={s.phone}
                   onChange={(e) => setEditStaff(prev => prev.map((x, idx) => idx === i ? { ...x, phone: e.target.value } : x))}
-                  placeholder="Phone"
+                  placeholder={t.set_phone}
                   className="h-8 text-sm w-32"
                 />
                 <Button size="sm" variant="ghost" className="h-8 px-2 text-muted-foreground hover:text-destructive"
@@ -310,7 +327,7 @@ export function SettingsView() {
                 </Button>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">Wage Roles (multi-select)</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">{t.set_wageRoles}</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {editRules.map(r => {
                     const selected = s.roles.includes(r.role);
@@ -343,24 +360,24 @@ export function SettingsView() {
           ))}
           <Button size="sm" variant="ghost" className="w-full h-8 text-xs"
             onClick={() => setEditStaff(prev => [...prev, { id: '', name: '', primaryRole: '', phone: '', notes: '', roles: [], sortOrder: prev.length }])}>
-            <Plus className="size-3 mr-1" /> Add Staff
+            <Plus className="size-3 mr-1" /> {t.set_addStaff}
           </Button>
         </CardContent>
       </Card>
 
       {/* Backup & Restore */}
-      <SectionTitle>Data Backup & Restore</SectionTitle>
+      <SectionTitle>{t.set_backup}</SectionTitle>
       <Card>
         <CardContent className="p-4 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Export all jobs, payments, tasks, wage distributions, staff, and settings as a JSON file. Use Import to restore from a backup.
+            {t.set_backupDesc}
           </p>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button onClick={handleExport} className="flex-1">
-              <Download className="size-4 mr-1" /> Download Backup
+              <Download className="size-4 mr-1" /> {t.set_downloadBackup}
             </Button>
             <Button onClick={() => document.getElementById('importFileInput')?.click()} variant="outline" className="flex-1">
-              <Upload className="size-4 mr-1" /> Import Backup
+              <Upload className="size-4 mr-1" /> {t.set_importBackup}
             </Button>
             <input type="file" id="importFileInput" accept=".json" className="hidden" onChange={handleFileUpload} />
           </div>
@@ -371,14 +388,14 @@ export function SettingsView() {
       <AlertDialog open={importOpen} onOpenChange={setImportOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Import will REPLACE all data</AlertDialogTitle>
+            <AlertDialogTitle>{t.set_importConfirm}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will overwrite all current jobs, payments, tasks, wage distributions, and settings with the contents of the backup file. This cannot be undone. Continue?
+              {t.set_importConfirmDesc}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleImport}>Import</AlertDialogAction>
+            <AlertDialogCancel>{t.common_cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleImport}>{t.set_import}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

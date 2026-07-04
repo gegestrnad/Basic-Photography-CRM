@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wagesApi, jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
+import { useLang } from '@/components/language-provider';
 import { PageHeader, SectionTitle } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import type { OperationalExpense, WageCalculationResult, WageDistribution } from
 
 export function WagesView() {
   const qc = useQueryClient();
+  const { t, lang } = useLang();
   const { data: wds = [] } = useQuery({ queryKey: ['wages'], queryFn: wagesApi.list });
 
   const [selectedJobId, setSelectedJobId] = useState<string>('');
@@ -112,7 +114,7 @@ export function WagesView() {
       });
     },
     onSuccess: () => {
-      toast.success('Wage distribution saved');
+      toast.success(t.wage_saved);
       qc.invalidateQueries({ queryKey: ['wages'] });
       qc.invalidateQueries({ queryKey: ['metrics'] });
       setSelectedJobId('');
@@ -124,7 +126,7 @@ export function WagesView() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => wagesApi.remove(id),
     onSuccess: () => {
-      toast.success('Wage distribution deleted');
+      toast.success(t.wage_deleted);
       qc.invalidateQueries({ queryKey: ['wages'] });
       qc.invalidateQueries({ queryKey: ['metrics'] });
       setDeleteId(null);
@@ -149,39 +151,39 @@ export function WagesView() {
 
   return (
     <div>
-      <PageHeader title="Wages" subtitle={`${wds.length} distribution${wds.length !== 1 ? 's' : ''}`} />
+      <PageHeader title={t.wage_title} subtitle={t.wage_count(wds.length)} />
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-xl md:text-2xl font-bold text-primary">{formatCurrency(totalCalculated)}</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Total Calculated</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-base sm:text-xl md:text-2xl font-bold text-primary tabular-nums break-all leading-tight">{formatCurrency(totalCalculated)}</div>
+            <div className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{t.wage_totalCalculated}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-xl md:text-2xl font-bold">{wds.length}</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Saved Records</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-base sm:text-xl md:text-2xl font-bold tabular-nums">{wds.length}</div>
+            <div className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{t.wage_savedRecords}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Calculator */}
-      <SectionTitle>Wage Calculator</SectionTitle>
+      <SectionTitle>{t.wage_calculator}</SectionTitle>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <CalcIcon className="size-4 text-primary" />
-            Calculator
+            {t.wage_calculator}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Job selector */}
           <div>
-            <Label htmlFor="wc_job">Select Job</Label>
+            <Label htmlFor="wc_job">{t.wage_selectJob}</Label>
             <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-              <SelectTrigger><SelectValue placeholder="— Choose a job —" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t.wage_chooseJob} /></SelectTrigger>
               <SelectContent>
                 {jobs.map(j => (
                   <SelectItem key={j.id} value={j.id}>
@@ -195,13 +197,12 @@ export function WagesView() {
           {!selectedJobId && (
             <div className="text-center py-8 text-sm text-muted-foreground">
               <div className="text-2xl mb-2 opacity-50">📋</div>
-              <div>Select a job to calculate wages</div>
-              <div className="text-xs mt-2">Or compute manually — payments will be 0</div>
+              <div>{t.wage_selectJobHint}</div>
             </div>
           )}
 
           {calcLoading && selectedJobId && (
-            <div className="text-center py-8 text-sm text-muted-foreground">Calculating...</div>
+            <div className="text-center py-8 text-sm text-muted-foreground">{t.wage_calculating}</div>
           )}
 
           {calc && (
@@ -210,27 +211,27 @@ export function WagesView() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Gross Amount (PAID payments)</span>
+                    <span className="text-muted-foreground">{t.wage_grossAmount}</span>
                     <span className="font-semibold">{formatCurrency(calc.grossAmount)}</span>
                   </div>
 
                   <div className="pt-2">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-xs uppercase tracking-wider flex items-center gap-1">
-                        <Receipt className="size-3" /> Operational Expenses
+                        <Receipt className="size-3" /> {t.wage_operationalExpenses}
                       </Label>
                       <Button type="button" size="sm" variant="ghost" onClick={addExpense} className="h-7 px-2">
-                        <Plus className="size-3" /> Add
+                        <Plus className="size-3" /> {t.wage_addExpense}
                       </Button>
                     </div>
                     <div className="space-y-1.5">
                       {expenses.length === 0 && (
-                        <div className="text-xs text-muted-foreground italic py-2">No expenses — using 62.5% ratio fallback</div>
+                        <div className="text-xs text-muted-foreground italic py-2">{lang === 'id' ? 'Tidak ada pengeluaran — menggunakan rasio fallback 62,5%' : 'No expenses — using 62.5% ratio fallback'}</div>
                       )}
                       {expenses.map((e, i) => (
                         <div key={i} className="flex gap-1.5">
                           <Input
-                            placeholder="Expense name"
+                            placeholder={t.wage_expenseName}
                             value={e.name}
                             onChange={(ev) => updateExpense(i, { name: ev.target.value })}
                             className="h-8 text-sm"
@@ -238,7 +239,7 @@ export function WagesView() {
                           <Input
                             type="number"
                             min={0}
-                            placeholder="Amount"
+                            placeholder={t.wage_expenseAmount}
                             value={e.amount || ''}
                             onChange={(ev) => updateExpense(i, { amount: Number(ev.target.value) })}
                             className="h-8 text-sm w-28"
@@ -252,14 +253,14 @@ export function WagesView() {
                   </div>
 
                   <div className="flex justify-between text-sm pt-2 border-t border-border">
-                    <span className="text-muted-foreground">Total Expenses</span>
+                    <span className="text-muted-foreground">{t.wage_totalExpenses}</span>
                     <span className="font-semibold text-amber-500">{formatCurrency(calc.totalExpenses)}</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div>
-                    <Label htmlFor="wc_base" className="text-xs uppercase tracking-wider">Distributable Base (editable)</Label>
+                    <Label htmlFor="wc_base" className="text-xs uppercase tracking-wider">{t.wage_distributableBase}</Label>
                     <Input
                       id="wc_base"
                       type="number"
@@ -269,21 +270,21 @@ export function WagesView() {
                       onChange={(e) => setCustomBase(Number(e.target.value))}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Auto: Gross − Expenses. Override above if needed.
+                      {t.wage_distributableBaseHint}
                     </p>
                   </div>
 
                   <div className="rounded-md bg-muted p-3 space-y-1.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Gross</span>
+                      <span className="text-muted-foreground">{t.wage_gross}</span>
                       <span>{formatCurrency(calc.grossAmount)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">− Expenses</span>
+                      <span className="text-muted-foreground">{t.wage_minusExpenses}</span>
                       <span className="text-amber-500">{formatCurrency(calc.totalExpenses)}</span>
                     </div>
                     <div className="flex justify-between font-semibold pt-1.5 border-t border-border">
-                      <span>= Distributable</span>
+                      <span>{t.wage_equalsDistributable}</span>
                       <span className="text-primary">{formatCurrency(calc.distributableBase)}</span>
                     </div>
                   </div>
@@ -291,7 +292,7 @@ export function WagesView() {
                   {calc.breakdown.length > 0 && (
                     <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || calc.distributableBase <= 0}>
                       <Save className="size-4 mr-1" />
-                      {saveMutation.isPending ? 'Saving...' : 'Save Distribution'}
+                      {saveMutation.isPending ? t.common_saving : t.wage_save}
                     </Button>
                   )}
                 </div>
@@ -301,9 +302,9 @@ export function WagesView() {
               {calc.breakdown.length > 0 && (
                 <div className="rounded-lg border border-border overflow-hidden">
                   <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 px-3 py-2 bg-muted text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                    <span>Staff</span>
-                    <span className="text-center">%</span>
-                    <span className="text-right">Amount</span>
+                    <span>{t.wage_staff}</span>
+                    <span className="text-center">{t.wage_percent}</span>
+                    <span className="text-right">{t.wage_amount}</span>
                   </div>
                   {calc.breakdown.map((b, i) => (
                     <div key={i} className="grid grid-cols-[2fr_1fr_1fr] gap-2 px-3 py-2.5 border-t border-border text-sm">
@@ -316,7 +317,7 @@ export function WagesView() {
                     </div>
                   ))}
                   <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 px-3 py-2.5 bg-muted border-t-2 border-border font-semibold">
-                    <span>Total</span>
+                    <span>{t.wage_total}</span>
                     <span></span>
                     <span className={`text-right ${calc.isVerified ? 'text-primary' : 'text-amber-500'}`}>
                       {formatCurrency(calc.totalCheck)}
@@ -328,7 +329,7 @@ export function WagesView() {
               {calc.breakdown.length === 0 && (
                 <div className="rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 p-3 text-sm flex items-start gap-2">
                   <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                  <span>No staff roles mapped for wage distribution. Add roles in Settings.</span>
+                  <span>{t.wage_noStaff}</span>
                 </div>
               )}
 
@@ -338,8 +339,8 @@ export function WagesView() {
                   {calc.isVerified ? <CheckCircle2 className="size-4" /> : <AlertCircle className="size-4" />}
                   <span>
                     {calc.isVerified
-                      ? 'Verification check passed — breakdown total equals distributable base.'
-                      : `Verification mismatch: ${formatCurrency(calc.totalCheck)} vs ${formatCurrency(calc.distributableBase)}.`}
+                      ? t.wage_verificationPassed
+                      : t.wage_verificationFailed(formatCurrency(calc.totalCheck), formatCurrency(calc.distributableBase))}
                   </span>
                 </div>
               )}
@@ -349,17 +350,17 @@ export function WagesView() {
       </Card>
 
       {/* Saved Distributions */}
-      <SectionTitle>Saved Distributions</SectionTitle>
+      <SectionTitle>{t.wage_savedDistributions}</SectionTitle>
       <div className="space-y-2">
         {wds.length === 0 ? (
           <div className="text-center py-12 text-sm text-muted-foreground">
             <div className="text-2xl mb-2 opacity-50">📄</div>
-            <div>No wage distributions saved yet</div>
+            <div>{t.wage_noSaved}</div>
           </div>
         ) : (
           wds.map(w => {
             const job = jobs.find(j => j.id === w.jobId);
-            const jobLabel = job ? `${job.client} (${w.jobId})` : (w.jobId || 'Standalone');
+            const jobLabel = job ? `${job.client} (${w.jobId})` : (w.jobId || t.wage_standalone);
             const staffCount = w.breakdown?.length || 0;
             return (
               <button
@@ -370,7 +371,7 @@ export function WagesView() {
                 <div className="min-w-0 flex-1">
                   <div className="font-medium truncate">{jobLabel}</div>
                   <div className="text-xs text-muted-foreground truncate">
-                    Base: {formatCurrency(w.distributableBase)} · {staffCount} staff · {formatDate(w.createdAt)}
+                    {t.wage_base}: {formatCurrency(w.distributableBase)} · {t.wage_staff_count(staffCount)} · {formatDate(w.createdAt, lang)}
                   </div>
                 </div>
                 <Trash2
@@ -390,25 +391,25 @@ export function WagesView() {
             <>
               <SheetHeader>
                 <SheetTitle>
-                  {jobs.find(j => j.id === detail.jobId)?.client || detail.jobId || 'Standalone'}
+                  {jobs.find(j => j.id === detail.jobId)?.client || detail.jobId || t.wage_standalone}
                 </SheetTitle>
                 <SheetDescription>{detail.id}</SheetDescription>
               </SheetHeader>
 
               <div className="mt-4 space-y-4">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Overview</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t.wage_overview}</h3>
                   <div className="space-y-1 text-sm">
-                    <Row label="Total Paid" value={formatCurrency(detail.totalPaid)} />
-                    <Row label="Gross Amount" value={formatCurrency(detail.grossAmount)} />
-                    <Row label="Distributable Base" value={<span className="text-primary font-semibold">{formatCurrency(detail.distributableBase)}</span>} />
-                    <Row label="Date" value={formatDate(detail.createdAt)} />
+                    <Row label={t.wage_totalPaid} value={formatCurrency(detail.totalPaid)} />
+                    <Row label={t.wage_grossAmount} value={formatCurrency(detail.grossAmount)} />
+                    <Row label={t.wage_distributableBase} value={<span className="text-primary font-semibold">{formatCurrency(detail.distributableBase)}</span>} />
+                    <Row label={t.wage_date} value={formatDate(detail.createdAt, lang)} />
                   </div>
                 </div>
 
                 {detail.operationalExpenses?.length > 0 && (
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Operational Expenses</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t.wage_operationalExpenses}</h3>
                     <div className="space-y-1 text-sm">
                       {detail.operationalExpenses.map((e, i) => (
                         <Row key={i} label={e.name} value={formatCurrency(e.amount)} />
@@ -418,7 +419,7 @@ export function WagesView() {
                 )}
 
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Staff Breakdown</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t.wage_staffBreakdown}</h3>
                   <div className="space-y-1 text-sm">
                     {detail.breakdown.map((b, i) => (
                       <Row
@@ -434,7 +435,7 @@ export function WagesView() {
                         value={<span className="text-emerald-500 font-semibold">{formatCurrency(b.amount)}</span>}
                       />
                     ))}
-                    <Row label={<span className="font-semibold">Total</span>} value={<span className="text-primary font-bold">{formatCurrency(detail.distributableBase)}</span>} />
+                    <Row label={<span className="font-semibold">{t.wage_total}</span>} value={<span className="text-primary font-bold">{formatCurrency(detail.distributableBase)}</span>} />
                   </div>
                 </div>
 
@@ -443,7 +444,7 @@ export function WagesView() {
                   className="w-full"
                   onClick={() => setDeleteId(detail.id)}
                 >
-                  <Trash2 className="size-4 mr-1" /> Delete
+                  <Trash2 className="size-4 mr-1" /> {t.common_delete}
                 </Button>
               </div>
             </>
@@ -455,16 +456,16 @@ export function WagesView() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this wage distribution?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>{t.wage_deleteConfirm}</AlertDialogTitle>
+            <AlertDialogDescription>{t.wage_deleteConfirmDesc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t.common_cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t.common_delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

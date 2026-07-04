@@ -1,4 +1,5 @@
 // Formatting helpers — pure functions, no server deps
+import type { Lang } from '@/lib/i18n';
 
 /** Format a number as Indonesian Rupiah, e.g. 1600000 → "Rp1.600.000" */
 export function formatCurrency(amount: number | null | undefined): string {
@@ -6,12 +7,15 @@ export function formatCurrency(amount: number | null | undefined): string {
   return 'Rp' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
 /** Format an ISO date string as "DD MMM YYYY", e.g. "14 Jun 2026" */
-export function formatDate(iso: string | null | undefined): string {
+export function formatDate(iso: string | null | undefined, lang: Lang = 'en'): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '—';
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = lang === 'id' ? MONTHS_ID : MONTHS_EN;
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
@@ -29,24 +33,27 @@ export function toDateInput(iso: string | null | undefined): string {
 /** Convert a YYYY-MM-DD string from <input type="date"> to ISO */
 export function fromDateInput(ymd: string): string | null {
   if (!ymd) return null;
-  // Treat as local midnight to avoid timezone drift
   const [y, m, d] = ymd.split('-').map(Number);
   if (!y || !m || !d) return null;
   return new Date(y, m - 1, d).toISOString();
 }
 
 /** Format date relative to today: "Today", "Tomorrow", "Yesterday", or "DD MMM YYYY" */
-export function formatDateRelative(iso: string | null | undefined): string {
+export function formatDateRelative(
+  iso: string | null | undefined,
+  lang: Lang = 'en',
+  labels?: { today?: string; tomorrow?: string; yesterday?: string }
+): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '—';
   const today = new Date(); today.setHours(0,0,0,0);
   const target = new Date(d); target.setHours(0,0,0,0);
   const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Tomorrow';
-  if (diff === -1) return 'Yesterday';
-  return formatDate(iso);
+  if (diff === 0) return labels?.today || (lang === 'id' ? 'Hari ini' : 'Today');
+  if (diff === 1) return labels?.tomorrow || (lang === 'id' ? 'Besok' : 'Tomorrow');
+  if (diff === -1) return labels?.yesterday || (lang === 'id' ? 'Kemarin' : 'Yesterday');
+  return formatDate(iso, lang);
 }
 
 /** Days from today (positive = future, negative = past, 0 = today) */
