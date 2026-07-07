@@ -1,0 +1,62 @@
+'use client';
+
+import { useAppStore } from '@/lib/store';
+import { useLang } from '@/components/language-provider';
+import { NAV_ITEMS } from '@/lib/nav-config';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Calculator } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+/**
+ * Desktop sidebar — fixed left column (md+).
+ * Shows app branding, full nav list, and theme toggle in the footer.
+ */
+export function Sidebar() {
+  const view = useAppStore(s => s.view);
+  const setView = useAppStore(s => s.setView);
+  const { t } = useLang();
+
+  return (
+    <aside className="hidden md:flex md:flex-col md:w-60 md:fixed md:inset-y-0 border-r border-border bg-sidebar">
+      {/* Branding */}
+      <div className="flex items-center gap-2 px-5 py-5 border-b border-border">
+        <div className="size-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+          <Calculator className="size-5 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <div className="font-bold text-sm leading-tight truncate">Photography Client</div>
+          <div className="font-bold text-sm leading-tight truncate">Management</div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-3 space-y-1">
+        {NAV_ITEMS.map(item => {
+          const Icon = item.icon;
+          const active = view === item.key;
+          const label = t[item.labelKey];
+          return (
+            <button
+              key={item.key}
+              onClick={() => setView(item.key)}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              )}
+            >
+              <Icon className="size-4 shrink-0" />
+              {label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Footer — theme toggle */}
+      <div className="p-3 border-t border-border">
+        <ThemeToggle />
+      </div>
+    </aside>
+  );
+}

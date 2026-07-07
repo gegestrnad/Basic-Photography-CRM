@@ -1,4 +1,5 @@
-// Shared TypeScript types for Photography Tracker
+// Shared TypeScript types for Photography Client Management
+// All domain types are centralized here — import from '@/lib/types' everywhere.
 
 export type JobStatus =
   | 'Inquiry' | 'Booked' | 'Shot' | 'Editing'
@@ -142,5 +143,6 @@ export interface Metrics {
   totalWagesCalculated: number;
 }
 
+/** Top-level navigation views. Drives the active-view state in the Zustand store. */
 export type ViewKey =
   | 'dashboard' | 'jobs' | 'payments' | 'tasks' | 'wages' | 'settings';
