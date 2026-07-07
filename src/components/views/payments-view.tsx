@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { paymentsApi, jobsApi } from '@/lib/api';
+import { paymentsApi, jobsApi, toastApiError } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
@@ -270,7 +270,7 @@ function PaymentFormBody({
       toast.success(payment ? t.pay_updated : t.pay_added);
       onSaved();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: toastApiError,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

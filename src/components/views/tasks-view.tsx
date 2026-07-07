@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { tasksApi, jobsApi } from '@/lib/api';
+import { tasksApi, jobsApi, toastApiError } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
@@ -314,7 +314,7 @@ function TaskFormBody({
       toast.success(task ? t.task_updated : t.task_added);
       onSaved();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: toastApiError,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

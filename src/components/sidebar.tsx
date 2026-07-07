@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/lib/store';
 import { useLang } from '@/components/language-provider';
 import { NAV_ITEMS } from '@/lib/nav-config';
@@ -19,6 +20,7 @@ export function Sidebar() {
   const authUser = useAppStore(s => s.authUser);
   const setAuth = useAppStore(s => s.setAuth);
   const { t } = useLang();
+  const qc = useQueryClient();
 
   async function handleLogout() {
     try {
@@ -31,6 +33,9 @@ export function Sidebar() {
           json: 'true',
         }),
       });
+      // Clear all cached queries BEFORE flipping auth state, so in-flight
+      // queries that return 401 don't surface as console errors / toasts.
+      qc.clear();
       setAuth(false);
       toast.success('Signed out');
     } catch {

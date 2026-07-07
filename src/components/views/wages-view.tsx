@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { wagesApi, jobsApi } from '@/lib/api';
+import { wagesApi, jobsApi, toastApiError } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader, SectionTitle } from '@/components/page-header';
@@ -122,7 +122,7 @@ export function WagesView() {
       setSelectedJobId('');
       setExpensesSyncedFor(null); // force re-sync on next calc
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: toastApiError,
   });
 
   const deleteMutation = useMutation({

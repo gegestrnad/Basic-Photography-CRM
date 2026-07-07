@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { clientsApi } from '@/lib/api';
+import { clientsApi, toastApiError } from '@/lib/api';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState } from '@/components/empty-state';
@@ -214,7 +214,7 @@ function ClientFormBody({
       toast.success(client ? t.client_updated : t.client_added);
       onSaved();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: toastApiError,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

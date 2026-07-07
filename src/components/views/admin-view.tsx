@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { usersApi, type UserCreateInput, type UserUpdateInput } from '@/lib/api';
+import { usersApi, type UserCreateInput, type UserUpdateInput, toastApiError, AuthenticationError } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
@@ -57,7 +57,7 @@ export function AdminView() {
       setDeleteId(null);
       setDetailId(null);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: toastApiError,
   });
 
   // Compute quick stats
@@ -333,6 +333,8 @@ function UserFormBody({
       onSaved();
     },
     onError: (e: Error) => {
+      // Silent on auth errors — fetchJson already triggered sign-out.
+      if (e instanceof AuthenticationError) return;
       const msg = e.message.toLowerCase();
       if (msg.includes('email') && (msg.includes('already') || msg.includes('registered') || msg.includes('duplicate'))) {
         toast.error(t.admin_emailTaken);

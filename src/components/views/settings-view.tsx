@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { settingsApi, backupApi } from '@/lib/api';
+import { settingsApi, backupApi, AuthenticationError } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { useAppStore } from '@/lib/store';
@@ -79,6 +79,8 @@ export function SettingsView() {
       triggerListsReload();
       qc.invalidateQueries();
     } catch (e: any) {
+      // Silent on auth errors — fetchJson already triggered sign-out.
+      if (e instanceof AuthenticationError) return;
       toast.error(e.message);
     }
   };
@@ -94,6 +96,7 @@ export function SettingsView() {
       URL.revokeObjectURL(url);
       toast.success('Backup downloaded');
     } catch (e: any) {
+      if (e instanceof AuthenticationError) return;
       toast.error(e.message);
     }
   };
@@ -110,6 +113,7 @@ export function SettingsView() {
       triggerListsReload();
       qc.invalidateQueries();
     } catch (e: any) {
+      if (e instanceof AuthenticationError) return;
       toast.error(t.set_importFailed(e.message));
     }
   };

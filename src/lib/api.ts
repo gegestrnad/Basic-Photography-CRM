@@ -4,6 +4,37 @@ import type {
   Job, Payment, Task, Staff, WageRule, WageConfig, Lists, Metrics, Client,
   WageDistribution, WageCalculationResult, User, UserRole,
 } from '@/lib/types';
+import { useAppStore } from '@/lib/store';
+
+/**
+ * Custom error type for 401 responses. We use a dedicated class so that:
+ *  1. React Query can identify it and skip retrying (no point retrying an
+ *     unauthenticated request).
+ *  2. Global error handlers can distinguish "session expired" from other
+ *     errors and sign the user out gracefully without surfacing a noisy
+ *     console error.
+ */
+export class AuthenticationError extends Error {
+  constructor(message = 'Authentication required') {
+    super(message);
+    this.name = 'AuthenticationError';
+    // Prevent this error from cluttering the console — it is expected and
+    // handled by the global query error handler in QueryProvider.
+    Object.defineProperty(this, 'silent', { value: true });
+  }
+}
+
+/**
+ * Sign the user out from the client side. Centralized here so that any 401
+ * response — whether from a query or a mutation — triggers a single, clean
+ * sign-out flow instead of throwing errors that surface in the console.
+ */
+function handleSessionExpired() {
+  // Mark as not authenticated. The AuthGate will swap to the LoginView.
+  // We deliberately do NOT call /api/auth/signout here — the session is
+  // already invalid on the server, so we just clear local state.
+  useAppStore.getState().setAuth(false);
+}
 
 async function fetchJson<T>(url: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -11,14 +42,32 @@ async function fetchJson<T>(url: string, opts?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
   });
   if (!res.ok) {
-    // 401 — session expired or not authenticated; throw a clean error
+    // 401 — session expired or not authenticated. Sign the user out
+    // gracefully and throw a typed AuthenticationError so callers can
+    // distinguish it from other failures.
     if (res.status === 401) {
-      throw new Error('Authentication required');
+      handleSessionExpired();
+      throw new AuthenticationError();
     }
     const err = await res.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(err.error || `${res.status} ${res.statusText}`);
   }
   return res.json() as Promise<T>;
+}
+
+/**
+ * Shared onError handler for useQuery / useMutation hooks.
+ * Silently swallows AuthenticationError — the fetchJson helper already
+ * called setAuth(false) on 401, so the AuthGate will swap to the LoginView.
+ * Showing a "Authentication required" toast on top of that is just noise.
+ *
+ * Usage:
+ *   useMutation({ ..., onError: toastApiError })
+ */
+export function toastApiError(error: Error) {
+  if (error instanceof AuthenticationError) return;
+  // Lazy-import sonner to avoid pulling it into the server bundle.
+  import('sonner').then(({ toast }) => toast.error(error.message));
 }
 
 // ── Clients ───────────────────────────────────────────────────
