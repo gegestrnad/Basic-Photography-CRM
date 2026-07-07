@@ -1,0 +1,774 @@
+     1→// Photography Client Management — i18n translations
+     2→// Languages: English (en), Bahasa Indonesia (id)
+     3→
+     4→export type Lang = 'en' | 'id';
+     5→
+     6→export interface Dict {
+     7→  // ── App ──
+     8→  appName: string;
+     9→  appTagline: string;
+    10→
+    11→  // ── Nav ──
+    12→  nav_dashboard: string;
+    13→  nav_jobs: string;
+    14→  nav_payments: string;
+    15→  nav_tasks: string;
+    16→  nav_wages: string;
+    17→  nav_clients: string;
+    18→  nav_settings: string;
+    19→
+    20→  // ── Common ──
+    21→  common_new: string;
+    22→  common_edit: string;
+    23→  common_delete: string;
+    24→  common_cancel: string;
+    25→  common_save: string;
+    26→  common_close: string;
+    27→  common_add: string;
+    28→  common_search: string;
+    29→  common_select: string;
+    30→  common_loading: string;
+    31→  common_saving: string;
+    32→  common_none: string;
+    33→  common_all: string;
+    34→  common_notes: string;
+    35→  common_optional: string;
+    36→  common_required: string;
+    37→  common_standalone: string;
+    38→
+    39→  // ── Dashboard ──
+    40→  dash_title: string;
+    41→  dash_activeJobs: string;
+    42→  dash_upcomingActive: string;
+    43→  dash_inEditing: string;
+    44→  dash_outstandingBal: string;
+    45→  dash_openTasks: string;
+    46→  dash_overdueTasks: string;
+    47→  dash_quickViews: string;
+    48→  dash_analytics: string;
+    49→  dash_revenueChart: string;
+    50→  dash_statusChart: string;
+    51→  dash_workflow: string;
+    52→  dash_recentJobs: string;
+    53→  dash_noJobs: string;
+    54→  dash_editingQueue: string;
+    55→  dash_openTasksCount: string;
+    56→  dash_distributions: string;
+    57→
+    58→  // ── Jobs ──
+    59→  jobs_title: string;
+    60→  jobs_count: (n: number) => string;
+    61→  jobs_search: string;
+    62→  jobs_filterAll: string;
+    63→  jobs_filterActive: string;
+    64→  jobs_filterEditing: string;
+    65→  jobs_filterDone: string;
+    66→  jobs_empty: string;
+    67→  jobs_new: string;
+    68→  jobs_edit: string;
+    69→  jobs_newDesc: string;
+    70→  jobs_editDesc: string;
+    71→  jobs_client: string;
+    72→  jobs_phone: string;
+    73→  jobs_jobType: string;
+    74→  jobs_jobDate: string;
+    75→  jobs_location: string;
+    76→  jobs_status: string;
+    77→  jobs_totalFee: string;
+    78→  jobs_deposit: string;
+    79→  jobs_balance: string;
+    80→  jobs_paymentStatus: string;
+    81→  jobs_photographers: string;
+    82→  jobs_editors: string;
+    83→  jobs_clientSource: string;
+    84→  jobs_jobInfo: string;
+    85→  jobs_financial: string;
+    86→  jobs_team: string;
+    87→  jobs_payments: (n: number) => string;
+    88→  jobs_tasks: (n: number) => string;
+    89→  jobs_save: string;
+    90→  jobs_update: string;
+    91→  jobs_added: string;
+    92→  jobs_updated: string;
+    93→  jobs_deleted: string;
+    94→  jobs_deleteConfirm: string;
+    95→  jobs_deleteConfirmDesc: string;
+    96→  jobs_clientError: string;
+    97→
+    98→  // ── Payments ──
+    99→  pay_title: string;
+   100→  pay_count: (n: number) => string;
+   101→  pay_new: string;
+   102→  pay_edit: string;
+   103→  pay_newDesc: string;
+   104→  pay_editDesc: string;
+   105→  pay_collected: string;
+   106→  pay_pending: string;
+   107→  pay_clients: string;
+   108→  pay_empty: string;
+   109→  pay_linkedJob: string;
+   110→  pay_client: string;
+   111→  pay_date: string;
+   112→  pay_amount: string;
+   113→  pay_method: string;
+   114→  pay_status: string;
+   115→  pay_job: string;
+   116→  pay_jobTotal: string;
+   117→  pay_jobBalance: string;
+   118→  pay_save: string;
+   119→  pay_update: string;
+   120→  pay_added: string;
+   121→  pay_updated: string;
+   122→  pay_deleted: string;
+   123→  pay_deleteConfirm: string;
+   124→  pay_deleteConfirmDesc: string;
+   125→  pay_clientError: string;
+   126→  pay_amountError: string;
+   127→
+   128→  // ── Tasks ──
+   129→  task_title: string;
+   130→  task_count: (n: number) => string;
+   131→  task_new: string;
+   132→  task_edit: string;
+   133→  task_newDesc: string;
+   134→  task_editDesc: string;
+   135→  task_filterAll: string;
+   136→  task_filterOpen: string;
+   137→  task_filterDone: string;
+   138→  task_empty: string;
+   139→  task_linkedJob: string;
+   140→  task_client: string;
+   141→  task_task: string;
+   142→  task_dueDate: string;
+   143→  task_status: string;
+   144→  task_save: string;
+   145→  task_update: string;
+   146→  task_added: string;
+   147→  task_updated: string;
+   148→  task_deleted: string;
+   149→  task_statusCycled: (s: string) => string;
+   150→  task_deleteConfirm: string;
+   151→  task_deleteConfirmDesc: string;
+   152→  task_clientError: string;
+   153→  task_taskError: string;
+   154→  task_today: string;
+   155→  task_tomorrow: string;
+   156→  task_yesterday: string;
+   157→
+   158→  // ── Wages ──
+   159→  wage_title: string;
+   160→  wage_count: (n: number) => string;
+   161→  wage_calculator: string;
+   162→  wage_selectJob: string;
+   163→  wage_chooseJob: string;
+   164→  wage_selectJobHint: string;
+   165→  wage_calculating: string;
+   166→  wage_grossAmount: string;
+   167→  wage_operationalExpenses: string;
+   168→  wage_totalExpenses: string;
+   169→  wage_distributableBase: string;
+   170→  wage_distributableBaseHint: string;
+   171→  wage_gross: string;
+   172→  wage_minusExpenses: string;
+   173→  wage_equalsDistributable: string;
+   174→  wage_save: string;
+   175→  wage_saveDistribution: string;
+   176→  wage_staff: string;
+   177→  wage_percent: string;
+   178→  wage_amount: string;
+   179→  wage_total: string;
+   180→  wage_verificationPassed: string;
+   181→  wage_verificationFailed: (a: string, b: string) => string;
+   182→  wage_noStaff: string;
+   183→  wage_expenseName: string;
+   184→  wage_expenseAmount: string;
+   185→  wage_addExpense: string;
+   186→  wage_totalCalculated: string;
+   187→  wage_savedRecords: string;
+   188→  wage_savedDistributions: string;
+   189→  wage_empty: string;
+   190→  wage_noSaved: string;
+   191→  wage_noSavedHint: string;
+   192→  wage_saved: string;
+   193→  wage_deleted: string;
+   194→  wage_deleteConfirm: string;
+   195→  wage_deleteConfirmDesc: string;
+   196→  wage_overview: string;
+   197→  wage_totalPaid: string;
+   198→  wage_date: string;
+   199→  wage_staffBreakdown: string;
+   200→  wage_standalone: string;
+   201→  wage_base: string;
+   202→  wage_staff_count: (n: number) => string;
+   203→
+   204→  // ── Clients ──
+   205→  client_title: string;
+   206→  client_count: (n: number) => string;
+   207→  client_new: string;
+   208→  client_edit: string;
+   209→  client_newDesc: string;
+   210→  client_editDesc: string;
+   211→  client_empty: string;
+   212→  client_name: string;
+   213→  client_phone: string;
+   214→  client_email: string;
+   215→  client_notes: string;
+   216→  client_jobs: (n: number) => string;
+   217→  client_save: string;
+   218→  client_update: string;
+   219→  client_added: string;
+   220→  client_updated: string;
+   221→  client_deleted: string;
+   222→  client_deleteConfirm: string;
+   223→  client_deleteConfirmDesc: string;
+   224→  client_nameError: string;
+   225→  client_emailError: string;
+   226→
+   227→  // ── Settings ──
+   228→  set_title: string;
+   229→  set_subtitle: string;
+   230→  set_saveAll: string;
+   231→  set_appearance: string;
+   232→  set_theme: string;
+   233→  set_themeDesc: string;
+   234→  set_themeToggle: string;
+   235→  set_language: string;
+   236→  set_languageDesc: string;
+   237→  set_dropdownLists: string;
+   238→  set_wageRules: string;
+   239→  set_totalPercent: string;
+   240→  set_shouldBe100: string;
+   241→  set_addRule: string;
+   242→  set_defaultExpenses: string;
+   243→  set_defaultExpensesHint: string;
+   244→  set_addExpenseTpl: string;
+   245→  set_fallbackRatio: string;
+   246→  set_fallbackRatioHint: (n: number) => string;
+   247→  set_staffRoles: string;
+   248→  set_name: string;
+   249→  set_primaryRole: string;
+   250→  set_phone: string;
+   251→  set_wageRoles: string;
+   252→  set_addStaff: string;
+   253→  set_backup: string;
+   254→  set_backupDesc: string;
+   255→  set_downloadBackup: string;
+   256→  set_importBackup: string;
+   257→  set_importConfirm: string;
+   258→  set_importConfirmDesc: string;
+   259→  set_import: string;
+   260→  set_importSuccess: string;
+   261→  set_importFailed: (e: string) => string;
+   262→  set_saved: string;
+   263→  set_add: string;
+   264→}
+   265→
+   266→// ── English ────────────────────────────────────────────────────
+   267→export const en: Dict = {
+   268→  appName: 'Photography Client Management',
+   269→  appTagline: 'PHOTOGRAPHY TRACKER',
+   270→
+   271→  nav_dashboard: 'Dashboard',
+   272→  nav_jobs: 'Jobs',
+   273→  nav_payments: 'Payments',
+   274→  nav_tasks: 'Tasks',
+   275→  nav_wages: 'Wages',
+   276→  nav_settings: 'Settings',
+   277→
+   278→  common_new: 'New',
+   279→  common_edit: 'Edit',
+   280→  common_delete: 'Delete',
+   281→  common_cancel: 'Cancel',
+   282→  common_save: 'Save',
+   283→  common_close: 'Close',
+   284→  common_add: 'Add',
+   285→  common_search: 'Search',
+   286→  common_select: 'Select',
+   287→  common_loading: 'Loading...',
+   288→  common_saving: 'Saving...',
+   289→  common_none: 'None',
+   290→  common_all: 'All',
+   291→  common_notes: 'Notes',
+   292→  common_optional: 'optional',
+   293→  common_required: 'required',
+   294→  common_standalone: '— None (standalone) —',
+   295→
+   296→  dash_title: 'Dashboard',
+   297→  dash_activeJobs: 'Active Jobs',
+   298→  dash_upcomingActive: 'Upcoming Active',
+   299→  dash_inEditing: 'In Editing',
+   300→  dash_outstandingBal: 'Outstanding Bal.',
+   301→  dash_openTasks: 'Open Tasks',
+   302→  dash_overdueTasks: 'Overdue Tasks',
+   303→  dash_quickViews: 'Quick Views',
+   304→  dash_analytics: 'Analytics',
+   305→  dash_revenueChart: 'Revenue (last 6 months)',
+   306→  dash_statusChart: 'Job Status Distribution',
+   307→  dash_workflow: 'Job Status Workflow',
+   308→  dash_recentJobs: 'Recent Jobs',
+   309→  dash_noJobs: 'No jobs yet',
+   310→  dash_editingQueue: 'Editing Queue',
+   311→  dash_openTasksCount: 'Open Tasks',
+   312→  dash_distributions: 'Distributions',
+   313→
+   314→  jobs_title: 'Jobs',
+   315→  jobs_count: (n) => `${n} job${n !== 1 ? 's' : ''}`,
+   316→  jobs_search: 'Search by client, type, location, team, or ID...',
+   317→  jobs_filterAll: 'All',
+   318→  jobs_filterActive: 'Active',
+   319→  jobs_filterEditing: 'Editing',
+   320→  jobs_filterDone: 'Done / Cancelled',
+   321→  jobs_empty: 'No jobs in this filter',
+   322→  jobs_new: 'New Job',
+   323→  jobs_edit: 'Edit Job',
+   324→  jobs_newDesc: 'Add a new photography job',
+   325→  jobs_editDesc: (undefined as any), // set below
+   326→  jobs_client: 'Client',
+   327→  jobs_phone: 'Phone',
+   328→  jobs_jobType: 'Job Type',
+   329→  jobs_jobDate: 'Job Date',
+   330→  jobs_location: 'Location',
+   331→  jobs_status: 'Status',
+   332→  jobs_totalFee: 'Total Fee',
+   333→  jobs_deposit: 'Deposit',
+   334→  jobs_balance: 'Balance',
+   335→  jobs_paymentStatus: 'Payment Status',
+   336→  jobs_photographers: 'Photographer(s)',
+   337→  jobs_editors: 'Editor(s)',
+   338→  jobs_clientSource: 'Client Source',
+   339→  jobs_jobInfo: 'Job Info',
+   340→  jobs_financial: 'Financial',
+   341→  jobs_team: 'Team',
+   342→  jobs_payments: (n) => `Payments (${n})`,
+   343→  jobs_tasks: (n) => `Tasks (${n})`,
+   344→  jobs_save: 'Save Job',
+   345→  jobs_update: 'Update Job',
+   346→  jobs_added: 'Job added',
+   347→  jobs_updated: 'Job updated',
+   348→  jobs_deleted: 'Job deleted',
+   349→  jobs_deleteConfirm: 'Delete this job?',
+   350→  jobs_deleteConfirmDesc: 'This will permanently remove the job along with its related payments, tasks, and wage distributions. This action cannot be undone.',
+   351→  jobs_clientError: 'Client name is required',
+   352→
+   353→  pay_title: 'Payments',
+   354→  pay_count: (n) => `${n} payment${n !== 1 ? 's' : ''}`,
+   355→  pay_new: 'New Payment',
+   356→  pay_edit: 'Edit Payment',
+   357→  pay_newDesc: 'Record a new payment',
+   358→  pay_editDesc: (undefined as any),
+   359→  pay_collected: 'Collected',
+   360→  pay_pending: 'Pending',
+   361→  pay_clients: 'Clients',
+   362→  pay_empty: 'No payment records yet',
+   363→  pay_linkedJob: 'Linked Job (optional)',
+   364→  pay_client: 'Client',
+   365→  pay_date: 'Date',
+   366→  pay_amount: 'Amount',
+   367→  pay_method: 'Method',
+   368→  pay_status: 'Status',
+   369→  pay_job: 'Job',
+   370→  pay_jobTotal: 'Job Total (snapshot)',
+   371→  pay_jobBalance: 'Job Balance (snapshot)',
+   372→  pay_save: 'Save Payment',
+   373→  pay_update: 'Update Payment',
+   374→  pay_added: 'Payment added',
+   375→  pay_updated: 'Payment updated',
+   376→  pay_deleted: 'Payment deleted',
+   377→  pay_deleteConfirm: 'Delete this payment?',
+   378→  pay_deleteConfirmDesc: 'This action cannot be undone. The job\'s balance will be restored if the payment was PAID.',
+   379→  pay_clientError: 'Client is required',
+   380→  pay_amountError: 'Amount must be greater than 0',
+   381→
+   382→  task_title: 'Tasks',
+   383→  task_count: (n) => `${n} task${n !== 1 ? 's' : ''}`,
+   384→  task_new: 'New Task',
+   385→  task_edit: 'Edit Task',
+   386→  task_newDesc: 'Create a new task',
+   387→  task_editDesc: (undefined as any),
+   388→  task_filterAll: 'All',
+   389→  task_filterOpen: 'Open',
+   390→  task_filterDone: 'Done',
+   391→  task_empty: 'No tasks in this filter',
+   392→  task_linkedJob: 'Linked Job (optional)',
+   393→  task_client: 'Client',
+   394→  task_task: 'Task',
+   395→  task_dueDate: 'Due Date',
+   396→  task_status: 'Status',
+   397→  task_save: 'Save Task',
+   398→  task_update: 'Update Task',
+   399→  task_added: 'Task added',
+   400→  task_updated: 'Task updated',
+   401→  task_deleted: 'Task deleted',
+   402→  task_statusCycled: (s) => `Task status: ${s}`,
+   403→  task_deleteConfirm: 'Delete this task?',
+   404→  task_deleteConfirmDesc: 'This action cannot be undone.',
+   405→  task_clientError: 'Client is required',
+   406→  task_taskError: 'Task description is required',
+   407→  task_today: 'Today',
+   408→  task_tomorrow: 'Tomorrow',
+   409→  task_yesterday: 'Yesterday',
+   410→
+   411→  wage_title: 'Wages',
+   412→  wage_count: (n) => `${n} distribution${n !== 1 ? 's' : ''}`,
+   413→  wage_calculator: 'Wage Calculator',
+   414→  wage_selectJob: 'Select Job',
+   415→  wage_chooseJob: '— Choose a job —',
+   416→  wage_selectJobHint: 'Select a job to calculate wages',
+   417→  wage_calculating: 'Calculating...',
+   418→  wage_grossAmount: 'Gross Amount (PAID payments)',
+   419→  wage_operationalExpenses: 'Operational Expenses',
+   420→  wage_totalExpenses: 'Total Expenses',
+   421→  wage_distributableBase: 'Distributable Base (editable)',
+   422→  wage_distributableBaseHint: 'Auto: Gross − Expenses. Override above if needed.',
+   423→  wage_gross: 'Gross',
+   424→  wage_minusExpenses: '− Expenses',
+   425→  wage_equalsDistributable: '= Distributable',
+   426→  wage_save: 'Save Distribution',
+   427→  wage_saveDistribution: 'Save Distribution',
+   428→  wage_staff: 'Staff',
+   429→  wage_percent: '%',
+   430→  wage_amount: 'Amount',
+   431→  wage_total: 'Total',
+   432→  wage_verificationPassed: 'Verification check passed — breakdown total equals distributable base.',
+   433→  wage_verificationFailed: (a, b) => `Verification mismatch: ${a} vs ${b}.`,
+   434→  wage_noStaff: 'No staff roles mapped for wage distribution. Add roles in Settings.',
+   435→  wage_expenseName: 'Expense name',
+   436→  wage_expenseAmount: 'Amount',
+   437→  wage_addExpense: 'Add',
+   438→  wage_totalCalculated: 'Total Calculated',
+   439→  wage_savedRecords: 'Saved Records',
+   440→  wage_savedDistributions: 'Saved Distributions',
+   441→  wage_empty: 'No wage distributions saved yet',
+   442→  wage_noSaved: 'No wage distributions saved yet',
+   443→  wage_noSavedHint: 'No wage distributions saved yet',
+   444→  wage_saved: 'Wage distribution saved',
+   445→  wage_deleted: 'Wage distribution deleted',
+   446→  wage_deleteConfirm: 'Delete this wage distribution?',
+   447→  wage_deleteConfirmDesc: 'This action cannot be undone.',
+   448→  wage_overview: 'Overview',
+   449→  wage_totalPaid: 'Total Paid',
+   450→  wage_date: 'Date',
+   451→  wage_staffBreakdown: 'Staff Breakdown',
+   452→  wage_standalone: 'Standalone',
+   453→  wage_base: 'Base',
+   454→  wage_staff_count: (n) => `${n} staff`,
+   455→
+   456→  // ── Clients ──
+   457→  client_title: 'Clients',
+   458→  client_count: (n) => `${n} client${n !== 1 ? 's' : ''}`,
+   459→  client_new: 'New Client',
+   460→  client_edit: 'Edit Client',
+   461→  client_newDesc: 'Add a new client to your roster',
+   462→  client_editDesc: 'Editing {id}',
+   463→  client_empty: 'No clients yet. Add your first client to start linking them to jobs.',
+   464→  client_name: 'Name',
+   465→  client_phone: 'Phone',
+   466→  client_email: 'Email',
+   467→  client_notes: 'Notes',
+   468→  client_jobs: (n) => `${n} job${n !== 1 ? 's' : ''}`,
+   469→  client_save: 'Save Client',
+   470→  client_update: 'Update Client',
+   471→  client_added: 'Client added',
+   472→  client_updated: 'Client updated',
+   473→  client_deleted: 'Client deleted',
+   474→  client_deleteConfirm: 'Delete this client?',
+   475→  client_deleteConfirmDesc: 'The client will be removed. Linked jobs will keep their client name but lose the connection. This cannot be undone.',
+   476→  client_nameError: 'Name is required',
+   477→  client_emailError: 'Invalid email address',
+   478→
+   479→  set_title: 'Settings',
+   480→  set_subtitle: 'Manage lists, wage rules, staff, and backups',
+   481→  set_saveAll: 'Save All',
+   482→  set_appearance: 'Appearance',
+   483→  set_theme: 'Theme',
+   484→  set_themeDesc: 'Toggle dark / light mode',
+   485→  set_themeToggle: 'Light',
+   486→  set_language: 'Language',
+   487→  set_languageDesc: 'Choose interface language',
+   488→  set_dropdownLists: 'Dropdown Lists',
+   489→  set_wageRules: 'Wage Rules (Role Percentages)',
+   490→  set_totalPercent: 'Total:',
+   491→  set_shouldBe100: 'should be 100%',
+   492→  set_addRule: 'Add Rule',
+   493→  set_defaultExpenses: 'Default Operational Expense Templates',
+   494→  set_defaultExpensesHint: 'Pre-populated when calculating wages for a new job.',
+   495→  set_addExpenseTpl: 'Add Expense Template',
+   496→  set_fallbackRatio: 'Fallback ratio:',
+   497→  set_fallbackRatioHint: (n) => `Used when no operational expenses are entered (${n}%)`,
+   498→  set_staffRoles: 'Staff & Roles',
+   499→  set_name: 'Name',
+   500→  set_primaryRole: 'Primary role',
+   501→  set_phone: 'Phone',
+   502→  set_wageRoles: 'Wage Roles (multi-select)',
+   503→  set_addStaff: 'Add Staff',
+   504→  set_backup: 'Data Backup & Restore',
+   505→  set_backupDesc: 'Export all jobs, payments, tasks, wage distributions, staff, and settings as a JSON file. Use Import to restore from a backup.',
+   506→  set_downloadBackup: 'Download Backup',
+   507→  set_importBackup: 'Import Backup',
+   508→  set_importConfirm: 'Import will REPLACE all data',
+   509→  set_importConfirmDesc: 'This will overwrite all current jobs, payments, tasks, wage distributions, and settings with the contents of the backup file. This cannot be undone. Continue?',
+   510→  set_import: 'Import',
+   511→  set_importSuccess: 'Data imported successfully',
+   512→  set_importFailed: (e) => `Import failed: ${e}`,
+   513→  set_saved: 'Settings saved',
+   514→  set_add: 'Add',
+   515→};
+   516→
+   517→// Fill in the editDesc fields (they reference the same string as edit)
+   518→en.jobs_editDesc = 'Editing {id}';
+   519→en.pay_editDesc = 'Editing {id}';
+   520→en.task_editDesc = 'Editing {id}';
+   521→
+   522→// ── Bahasa Indonesia ───────────────────────────────────────────
+   523→export const id: Dict = {
+   524→  appName: 'Manajemen Klien Fotografi',
+   525→  appTagline: 'PE LACAK FOTOGRAFI',
+   526→
+   527→  nav_dashboard: 'Dasbor',
+   528→  nav_jobs: 'Pekerjaan',
+   529→  nav_payments: 'Pembayaran',
+   530→  nav_tasks: 'Tugas',
+   531→  nav_wages: 'Upah',
+   532→  nav_settings: 'Pengaturan',
+   533→
+   534→  common_new: 'Baru',
+   535→  common_edit: 'Edit',
+   536→  common_delete: 'Hapus',
+   537→  common_cancel: 'Batal',
+   538→  common_save: 'Simpan',
+   539→  common_close: 'Tutup',
+   540→  common_add: 'Tambah',
+   541→  common_search: 'Cari',
+   542→  common_select: 'Pilih',
+   543→  common_loading: 'Memuat...',
+   544→  common_saving: 'Menyimpan...',
+   545→  common_none: 'Tidak ada',
+   546→  common_all: 'Semua',
+   547→  common_notes: 'Catatan',
+   548→  common_optional: 'opsional',
+   549→  common_required: 'wajib',
+   550→  common_standalone: '— Tidak ada (mandiri) —',
+   551→
+   552→  dash_title: 'Dasbor',
+   553→  dash_activeJobs: 'Pekerjaan Aktif',
+   554→  dash_upcomingActive: 'Akan Datang',
+   555→  dash_inEditing: 'Sedang Edit',
+   556→  dash_outstandingBal: 'Saldo Tertunggak',
+   557→  dash_openTasks: 'Tugas Terbuka',
+   558→  dash_overdueTasks: 'Tugas Terlambat',
+   559→  dash_quickViews: 'Akses Cepat',
+   560→  dash_analytics: 'Analitik',
+   561→  dash_revenueChart: 'Pendapatan (6 bulan terakhir)',
+   562→  dash_statusChart: 'Distribusi Status Pekerjaan',
+   563→  dash_workflow: 'Alur Status Pekerjaan',
+   564→  dash_recentJobs: 'Pekerjaan Terbaru',
+   565→  dash_noJobs: 'Belum ada pekerjaan',
+   566→  dash_editingQueue: 'Antrian Edit',
+   567→  dash_openTasksCount: 'Tugas Terbuka',
+   568→  dash_distributions: 'Distribusi',
+   569→
+   570→  jobs_title: 'Pekerjaan',
+   571→  jobs_count: (n) => `${n} pekerjaan`,
+   572→  jobs_search: 'Cari berdasarkan klien, jenis, lokasi, tim, atau ID...',
+   573→  jobs_filterAll: 'Semua',
+   574→  jobs_filterActive: 'Aktif',
+   575→  jobs_filterEditing: 'Sedang Edit',
+   576→  jobs_filterDone: 'Selesai / Dibatalkan',
+   577→  jobs_empty: 'Tidak ada pekerjaan di filter ini',
+   578→  jobs_new: 'Pekerjaan Baru',
+   579→  jobs_edit: 'Edit Pekerjaan',
+   580→  jobs_newDesc: 'Tambah pekerjaan fotografi baru',
+   581→  jobs_editDesc: 'Mengedit {id}',
+   582→  jobs_client: 'Klien',
+   583→  jobs_phone: 'Telepon',
+   584→  jobs_jobType: 'Jenis Pekerjaan',
+   585→  jobs_jobDate: 'Tanggal Pekerjaan',
+   586→  jobs_location: 'Lokasi',
+   587→  jobs_status: 'Status',
+   588→  jobs_totalFee: 'Total Biaya',
+   589→  jobs_deposit: 'Deposit',
+   590→  jobs_balance: 'Saldo',
+   591→  jobs_paymentStatus: 'Status Pembayaran',
+   592→  jobs_photographers: 'Fotografer',
+   593→  jobs_editors: 'Editor',
+   594→  jobs_clientSource: 'Sumber Klien',
+   595→  jobs_jobInfo: 'Info Pekerjaan',
+   596→  jobs_financial: 'Keuangan',
+   597→  jobs_team: 'Tim',
+   598→  jobs_payments: (n) => `Pembayaran (${n})`,
+   599→  jobs_tasks: (n) => `Tugas (${n})`,
+   600→  jobs_save: 'Simpan Pekerjaan',
+   601→  jobs_update: 'Perbarui Pekerjaan',
+   602→  jobs_added: 'Pekerjaan ditambahkan',
+   603→  jobs_updated: 'Pekerjaan diperbarui',
+   604→  jobs_deleted: 'Pekerjaan dihapus',
+   605→  jobs_deleteConfirm: 'Hapus pekerjaan ini?',
+   606→  jobs_deleteConfirmDesc: 'Ini akan menghapus pekerjaan secara permanen beserta pembayaran, tugas, dan distribusi upah terkait. Tindakan ini tidak dapat dibatalkan.',
+   607→  jobs_clientError: 'Nama klien wajib diisi',
+   608→
+   609→  pay_title: 'Pembayaran',
+   610→  pay_count: (n) => `${n} pembayaran`,
+   611→  pay_new: 'Pembayaran Baru',
+   612→  pay_edit: 'Edit Pembayaran',
+   613→  pay_newDesc: 'Catat pembayaran baru',
+   614→  pay_editDesc: 'Mengedit {id}',
+   615→  pay_collected: 'Terkumpul',
+   616→  pay_pending: 'Tertunda',
+   617→  pay_clients: 'Klien',
+   618→  pay_empty: 'Belum ada catatan pembayaran',
+   619→  pay_linkedJob: 'Pekerjaan Terkait (opsional)',
+   620→  pay_client: 'Klien',
+   621→  pay_date: 'Tanggal',
+   622→  pay_amount: 'Jumlah',
+   623→  pay_method: 'Metode',
+   624→  pay_status: 'Status',
+   625→  pay_job: 'Pekerjaan',
+   626→  pay_jobTotal: 'Total Pekerjaan (snapshot)',
+   627→  pay_jobBalance: 'Saldo Pekerjaan (snapshot)',
+   628→  pay_save: 'Simpan Pembayaran',
+   629→  pay_update: 'Perbarui Pembayaran',
+   630→  pay_added: 'Pembayaran ditambahkan',
+   631→  pay_updated: 'Pembayaran diperbarui',
+   632→  pay_deleted: 'Pembayaran dihapus',
+   633→  pay_deleteConfirm: 'Hapus pembayaran ini?',
+   634→  pay_deleteConfirmDesc: 'Tindakan ini tidak dapat dibatalkan. Saldo pekerjaan akan dipulihkan jika pembayaran berstatus PAID.',
+   635→  pay_clientError: 'Klien wajib diisi',
+   636→  pay_amountError: 'Jumlah harus lebih besar dari 0',
+   637→
+   638→  task_title: 'Tugas',
+   639→  task_count: (n) => `${n} tugas`,
+   640→  task_new: 'Tugas Baru',
+   641→  task_edit: 'Edit Tugas',
+   642→  task_newDesc: 'Buat tugas baru',
+   643→  task_editDesc: 'Mengedit {id}',
+   644→  task_filterAll: 'Semua',
+   645→  task_filterOpen: 'Terbuka',
+   646→  task_filterDone: 'Selesai',
+   647→  task_empty: 'Tidak ada tugas di filter ini',
+   648→  task_linkedJob: 'Pekerjaan Terkait (opsional)',
+   649→  task_client: 'Klien',
+   650→  task_task: 'Tugas',
+   651→  task_dueDate: 'Tanggal Jatuh Tempo',
+   652→  task_status: 'Status',
+   653→  task_save: 'Simpan Tugas',
+   654→  task_update: 'Perbarui Tugas',
+   655→  task_added: 'Tugas ditambahkan',
+   656→  task_updated: 'Tugas diperbarui',
+   657→  task_deleted: 'Tugas dihapus',
+   658→  task_statusCycled: (s) => `Status tugas: ${s}`,
+   659→  task_deleteConfirm: 'Hapus tugas ini?',
+   660→  task_deleteConfirmDesc: 'Tindakan ini tidak dapat dibatalkan.',
+   661→  task_clientError: 'Klien wajib diisi',
+   662→  task_taskError: 'Deskripsi tugas wajib diisi',
+   663→  task_today: 'Hari ini',
+   664→  task_tomorrow: 'Besok',
+   665→  task_yesterday: 'Kemarin',
+   666→
+   667→  wage_title: 'Upah',
+   668→  wage_count: (n) => `${n} distribusi`,
+   669→  wage_calculator: 'Kalkulator Upah',
+   670→  wage_selectJob: 'Pilih Pekerjaan',
+   671→  wage_chooseJob: '— Pilih pekerjaan —',
+   672→  wage_selectJobHint: 'Pilih pekerjaan untuk menghitung upah',
+   673→  wage_calculating: 'Menghitung...',
+   674→  wage_grossAmount: 'Jumlah Kotor (pembayaran PAID)',
+   675→  wage_operationalExpenses: 'Pengeluaran Operasional',
+   676→  wage_totalExpenses: 'Total Pengeluaran',
+   677→  wage_distributableBase: 'Dasar Distribusi (dapat diubah)',
+   678→  wage_distributableBaseHint: 'Otomatis: Kotor − Pengeluaran. Ubah di atas jika perlu.',
+   679→  wage_gross: 'Kotor',
+   680→  wage_minusExpenses: '− Pengeluaran',
+   681→  wage_equalsDistributable: '= Distribusi',
+   682→  wage_save: 'Simpan Distribusi',
+   683→  wage_saveDistribution: 'Simpan Distribusi',
+   684→  wage_staff: 'Staf',
+   685→  wage_percent: '%',
+   686→  wage_amount: 'Jumlah',
+   687→  wage_total: 'Total',
+   688→  wage_verificationPassed: 'Verifikasi berhasil — total rincian sama dengan dasar distribusi.',
+   689→  wage_verificationFailed: (a, b) => `Verifikasi tidak cocok: ${a} vs ${b}.`,
+   690→  wage_noStaff: 'Tidak ada peran staf yang dipetakan untuk distribusi upah. Tambahkan peran di Pengaturan.',
+   691→  wage_expenseName: 'Nama pengeluaran',
+   692→  wage_expenseAmount: 'Jumlah',
+   693→  wage_addExpense: 'Tambah',
+   694→  wage_totalCalculated: 'Total Dihitung',
+   695→  wage_savedRecords: 'Catatan Tersimpan',
+   696→  wage_savedDistributions: 'Distribusi Tersimpan',
+   697→  wage_empty: 'Belum ada distribusi upah tersimpan',
+   698→  wage_noSaved: 'Belum ada distribusi upah tersimpan',
+   699→  wage_noSavedHint: 'Belum ada distribusi upah tersimpan',
+   700→  wage_saved: 'Distribusi upah disimpan',
+   701→  wage_deleted: 'Distribusi upah dihapus',
+   702→  wage_deleteConfirm: 'Hapus distribusi upah ini?',
+   703→  wage_deleteConfirmDesc: 'Tindakan ini tidak dapat dibatalkan.',
+   704→  wage_overview: 'Ikhtisar',
+   705→  wage_totalPaid: 'Total Dibayar',
+   706→  wage_date: 'Tanggal',
+   707→  wage_staffBreakdown: 'Rincian Staf',
+   708→  wage_standalone: 'Mandiri',
+   709→  wage_base: 'Dasar',
+   710→  wage_staff_count: (n) => `${n} staf`,
+   711→
+   712→  // ── Clients ──
+   713→  client_title: 'Klien',
+   714→  client_count: (n) => `${n} klien`,
+   715→  client_new: 'Klien Baru',
+   716→  client_edit: 'Edit Klien',
+   717→  client_newDesc: 'Tambah klien baru ke daftar Anda',
+   718→  client_editDesc: 'Mengedit {id}',
+   719→  client_empty: 'Belum ada klien. Tambahkan klien pertama untuk mulai menautkannya ke pekerjaan.',
+   720→  client_name: 'Nama',
+   721→  client_phone: 'Telepon',
+   722→  client_email: 'Email',
+   723→  client_notes: 'Catatan',
+   724→  client_jobs: (n) => `${n} pekerjaan`,
+   725→  client_save: 'Simpan Klien',
+   726→  client_update: 'Perbarui Klien',
+   727→  client_added: 'Klien ditambahkan',
+   728→  client_updated: 'Klien diperbarui',
+   729→  client_deleted: 'Klien dihapus',
+   730→  client_deleteConfirm: 'Hapus klien ini?',
+   731→  client_deleteConfirmDesc: 'Klien akan dihapus. Pekerjaan terkait akan tetap menyimpan nama klien tetapi kehilangan koneksi. Tindakan ini tidak dapat dibatalkan.',
+   732→  client_nameError: 'Nama wajib diisi',
+   733→  client_emailError: 'Alamat email tidak valid',
+   734→
+   735→  set_title: 'Pengaturan',
+   736→  set_subtitle: 'Kelola daftar, aturan upah, staf, dan cadangan',
+   737→  set_saveAll: 'Simpan Semua',
+   738→  set_appearance: 'Tampilan',
+   739→  set_theme: 'Tema',
+   740→  set_themeDesc: 'Beralih mode gelap / terang',
+   741→  set_themeToggle: 'Terang',
+   742→  set_language: 'Bahasa',
+   743→  set_languageDesc: 'Pilih bahasa antarmuka',
+   744→  set_dropdownLists: 'Daftar Dropdown',
+   745→  set_wageRules: 'Aturan Upah (Persentase Peran)',
+   746→  set_totalPercent: 'Total:',
+   747→  set_shouldBe100: 'harus 100%',
+   748→  set_addRule: 'Tambah Aturan',
+   749→  set_defaultExpenses: 'Templat Pengeluaran Operasional Default',
+   750→  set_defaultExpensesHint: 'Diisi otomatis saat menghitung upah untuk pekerjaan baru.',
+   751→  set_addExpenseTpl: 'Tambah Templat Pengeluaran',
+   752→  set_fallbackRatio: 'Rasio fallback:',
+   753→  set_fallbackRatioHint: (n) => `Digunakan saat tidak ada pengeluaran operasional (${n}%)`,
+   754→  set_staffRoles: 'Staf & Peran',
+   755→  set_name: 'Nama',
+   756→  set_primaryRole: 'Peran utama',
+   757→  set_phone: 'Telepon',
+   758→  set_wageRoles: 'Peran Upah (pilih banyak)',
+   759→  set_addStaff: 'Tambah Staf',
+   760→  set_backup: 'Cadangkan & Pulihkan Data',
+   761→  set_backupDesc: 'Ekspor semua pekerjaan, pembayaran, tugas, distribusi upah, staf, dan pengaturan sebagai file JSON. Gunakan Impor untuk memulihkan dari cadangan.',
+   762→  set_downloadBackup: 'Unduh Cadangan',
+   763→  set_importBackup: 'Impor Cadangan',
+   764→  set_importConfirm: 'Impor akan MENGGANTI semua data',
+   765→  set_importConfirmDesc: 'Ini akan menimpa semua pekerjaan, pembayaran, tugas, distribusi upah, dan pengaturan saat ini dengan isi file cadangan. Tindakan ini tidak dapat dibatalkan. Lanjutkan?',
+   766→  set_import: 'Impor',
+   767→  set_importSuccess: 'Data berhasil diimpor',
+   768→  set_importFailed: (e) => `Impor gagal: ${e}`,
+   769→  set_saved: 'Pengaturan disimpan',
+   770→  set_add: 'Tambah',
+   771→};
+   772→
+   773→export const dictionaries: Record<Lang, Dict> = { en, id };
+   774→

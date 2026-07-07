@@ -2,7 +2,7 @@
 
 import type {
   Job, Payment, Task, Staff, WageRule, WageConfig, Lists, Metrics, Client,
-  WageDistribution, WageCalculationResult,
+  WageDistribution, WageCalculationResult, User, UserRole,
 } from '@/lib/types';
 
 async function fetchJson<T>(url: string, opts?: RequestInit): Promise<T> {
@@ -94,4 +94,28 @@ export const dashboardApi = {
 export const backupApi = {
   export: () => fetch('/api/backup/export').then(r => r.blob()),
   import: (data: any) => fetchJson('/api/backup/import', { method: 'POST', body: JSON.stringify(data) }),
+};
+
+// ── Users (Admin) ─────────────────────────────────────────────
+export interface UserCreateInput {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UserUpdateInput {
+  name?: string;
+  email?: string;
+  password?: string | null;
+  role?: UserRole;
+}
+
+export const usersApi = {
+  list: () => fetchJson<{ users: User[] }>('/api/users').then(r => r.users),
+  create: (data: UserCreateInput) =>
+    fetchJson<{ user: User }>('/api/users', { method: 'POST', body: JSON.stringify(data) }).then(r => r.user),
+  update: (id: string, changes: UserUpdateInput) =>
+    fetchJson<{ user: User }>(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(changes) }).then(r => r.user),
+  remove: (id: string) => fetchJson(`/api/users/${id}`, { method: 'DELETE' }),
 };

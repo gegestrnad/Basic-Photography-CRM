@@ -160,6 +160,21 @@ export const backupImportSchema = z.object({
   lists: z.record(z.array(z.string())).optional(),
 });
 
+// ── Users (Admin) ─────────────────────────────────────────────
+export const userCreateSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  email: z.string().trim().toLowerCase().email('A valid email is required').max(200),
+  password: z.string().min(6, 'Password must be at least 6 characters').max(200),
+  role: z.enum(['admin', 'user']).default('user'),
+});
+
+export const userUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  email: z.string().trim().toLowerCase().email().max(200).optional(),
+  password: z.string().min(6).max(200).optional().nullable(),
+  role: z.enum(['admin', 'user']).optional(),
+}).strict();
+
 // ── Helpers ───────────────────────────────────────────────────
 export type ValidationResult<T> =
   | { ok: true; data: T }

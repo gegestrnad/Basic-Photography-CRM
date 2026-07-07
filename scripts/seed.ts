@@ -20,7 +20,19 @@ async function main() {
       role: 'admin',
     },
   });
-  console.log('  Demo user: admin@example.com / admin123');
+  console.log('  Demo admin user: admin@example.com / admin123');
+
+  // Demo regular user (no access to Settings or User Admin)
+  const userPassword = await bcrypt.hash('user123', 10);
+  await db.user.create({
+    data: {
+      email: 'user@example.com',
+      name: 'Regular User',
+      password: userPassword,
+      role: 'user',
+    },
+  });
+  console.log('  Demo regular user: user@example.com / user123');
 
   // ── List Values ─────────────────────────────────────────────
   const lists: Record<string, string[]> = {

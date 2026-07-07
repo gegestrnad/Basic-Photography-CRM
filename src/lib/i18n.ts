@@ -16,6 +16,7 @@ export interface Dict {
   nav_wages: string;
   nav_clients: string;
   nav_settings: string;
+  nav_admin: string;
 
   // ── Common ──
   common_new: string;
@@ -261,6 +262,47 @@ export interface Dict {
   set_importFailed: (e: string) => string;
   set_saved: string;
   set_add: string;
+
+  // ── Admin (User Management) ──
+  admin_title: string;
+  admin_count: (n: number) => string;
+  admin_new: string;
+  admin_edit: string;
+  admin_newDesc: string;
+  admin_editDesc: string;
+  admin_empty: string;
+  admin_name: string;
+  admin_email: string;
+  admin_password: string;
+  admin_passwordHint: string;
+  admin_passwordOptional: string;
+  admin_passwordPlaceholder: string;
+  admin_role: string;
+  admin_roleAdmin: string;
+  admin_roleUser: string;
+  admin_roleAdminDesc: string;
+  admin_roleUserDesc: string;
+  admin_createdAt: string;
+  admin_save: string;
+  admin_update: string;
+  admin_added: string;
+  admin_updated: string;
+  admin_deleted: string;
+  admin_deleteConfirm: string;
+  admin_deleteConfirmDesc: string;
+  admin_nameError: string;
+  admin_emailError: string;
+  admin_passwordError: string;
+  admin_emailTaken: string;
+  admin_cannotDeleteSelf: string;
+  admin_cannotDeleteLastAdmin: string;
+  admin_you: string;
+  admin_lastLogin: string;
+  admin_changePassword: string;
+  admin_changePasswordHint: string;
+  admin_statsTotal: string;
+  admin_statsAdmins: string;
+  admin_statsUsers: string;
 }
 
 // ── English ────────────────────────────────────────────────────
@@ -273,7 +315,9 @@ export const en: Dict = {
   nav_payments: 'Payments',
   nav_tasks: 'Tasks',
   nav_wages: 'Wages',
+  nav_clients: 'Clients',
   nav_settings: 'Settings',
+  nav_admin: 'User Admin',
 
   common_new: 'New',
   common_edit: 'Edit',
@@ -512,6 +556,47 @@ export const en: Dict = {
   set_importFailed: (e) => `Import failed: ${e}`,
   set_saved: 'Settings saved',
   set_add: 'Add',
+
+  // ── Admin (User Management) ──
+  admin_title: 'User Management',
+  admin_count: (n) => `${n} user${n !== 1 ? 's' : ''}`,
+  admin_new: 'New User',
+  admin_edit: 'Edit User',
+  admin_newDesc: 'Create a new login account. The user will be able to sign in with their email and password.',
+  admin_editDesc: 'Editing {id}. Leave the password blank to keep the current password unchanged.',
+  admin_empty: 'No users yet. Create your first user to get started.',
+  admin_name: 'Name',
+  admin_email: 'Email',
+  admin_password: 'Password',
+  admin_passwordHint: 'Minimum 6 characters. Will be hashed with bcrypt before storage.',
+  admin_passwordOptional: 'Leave blank to keep current password',
+  admin_passwordPlaceholder: 'Enter new password',
+  admin_role: 'Role',
+  admin_roleAdmin: 'Admin',
+  admin_roleUser: 'User',
+  admin_roleAdminDesc: 'Full access — can manage jobs, payments, wages, settings, and other users.',
+  admin_roleUserDesc: 'Standard access — can manage jobs, payments, tasks, wages, and clients. Cannot access settings or user management.',
+  admin_createdAt: 'Created',
+  admin_save: 'Save User',
+  admin_update: 'Update User',
+  admin_added: 'User created',
+  admin_updated: 'User updated',
+  admin_deleted: 'User deleted',
+  admin_deleteConfirm: 'Delete this user?',
+  admin_deleteConfirmDesc: 'The user will no longer be able to sign in. This action cannot be undone.',
+  admin_nameError: 'Name is required',
+  admin_emailError: 'A valid email is required',
+  admin_passwordError: 'Password must be at least 6 characters',
+  admin_emailTaken: 'This email is already registered',
+  admin_cannotDeleteSelf: 'You cannot delete your own account',
+  admin_cannotDeleteLastAdmin: 'Cannot delete the last admin account',
+  admin_you: 'You',
+  admin_lastLogin: 'Last login',
+  admin_changePassword: 'Change Password',
+  admin_changePasswordHint: 'Enter a new password to reset it. Leave blank to keep the current password.',
+  admin_statsTotal: 'Total Users',
+  admin_statsAdmins: 'Admins',
+  admin_statsUsers: 'Standard Users',
 };
 
 // Fill in the editDesc fields (they reference the same string as edit)
@@ -529,7 +614,9 @@ export const id: Dict = {
   nav_payments: 'Pembayaran',
   nav_tasks: 'Tugas',
   nav_wages: 'Upah',
+  nav_clients: 'Klien',
   nav_settings: 'Pengaturan',
+  nav_admin: 'Admin Pengguna',
 
   common_new: 'Baru',
   common_edit: 'Edit',
@@ -768,6 +855,47 @@ export const id: Dict = {
   set_importFailed: (e) => `Impor gagal: ${e}`,
   set_saved: 'Pengaturan disimpan',
   set_add: 'Tambah',
+
+  // ── Admin (User Management) ──
+  admin_title: 'Manajemen Pengguna',
+  admin_count: (n) => `${n} pengguna`,
+  admin_new: 'Pengguna Baru',
+  admin_edit: 'Edit Pengguna',
+  admin_newDesc: 'Buat akun login baru. Pengguna akan dapat masuk dengan email dan kata sandi mereka.',
+  admin_editDesc: 'Mengedit {id}. Biarkan kata sandi kosong untuk tetap menggunakan kata sandi saat ini.',
+  admin_empty: 'Belum ada pengguna. Buat pengguna pertama Anda untuk memulai.',
+  admin_name: 'Nama',
+  admin_email: 'Email',
+  admin_password: 'Kata Sandi',
+  admin_passwordHint: 'Minimal 6 karakter. Akan di-hash dengan bcrypt sebelum disimpan.',
+  admin_passwordOptional: 'Biarkan kosong untuk menyimpan kata sandi saat ini',
+  admin_passwordPlaceholder: 'Masukkan kata sandi baru',
+  admin_role: 'Peran',
+  admin_roleAdmin: 'Admin',
+  admin_roleUser: 'Pengguna',
+  admin_roleAdminDesc: 'Akses penuh — dapat mengelola pekerjaan, pembayaran, upah, pengaturan, dan pengguna lain.',
+  admin_roleUserDesc: 'Akses standar — dapat mengelola pekerjaan, pembayaran, tugas, upah, dan klien. Tidak dapat mengakses pengaturan atau manajemen pengguna.',
+  admin_createdAt: 'Dibuat',
+  admin_save: 'Simpan Pengguna',
+  admin_update: 'Perbarui Pengguna',
+  admin_added: 'Pengguna dibuat',
+  admin_updated: 'Pengguna diperbarui',
+  admin_deleted: 'Pengguna dihapus',
+  admin_deleteConfirm: 'Hapus pengguna ini?',
+  admin_deleteConfirmDesc: 'Pengguna tidak akan dapat masuk lagi. Tindakan ini tidak dapat dibatalkan.',
+  admin_nameError: 'Nama wajib diisi',
+  admin_emailError: 'Email yang valid wajib diisi',
+  admin_passwordError: 'Kata sandi minimal 6 karakter',
+  admin_emailTaken: 'Email ini sudah terdaftar',
+  admin_cannotDeleteSelf: 'Anda tidak dapat menghapus akun Anda sendiri',
+  admin_cannotDeleteLastAdmin: 'Tidak dapat menghapus akun admin terakhir',
+  admin_you: 'Anda',
+  admin_lastLogin: 'Login terakhir',
+  admin_changePassword: 'Ubah Kata Sandi',
+  admin_changePasswordHint: 'Masukkan kata sandi baru untuk mengatur ulang. Biarkan kosong untuk menyimpan kata sandi saat ini.',
+  admin_statsTotal: 'Total Pengguna',
+  admin_statsAdmins: 'Admin',
+  admin_statsUsers: 'Pengguna Standar',
 };
 
 export const dictionaries: Record<Lang, Dict> = { en, id };

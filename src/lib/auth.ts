@@ -2,10 +2,7 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
-
-// Fresh PrismaClient instance for auth (avoids edge-runtime caching issues with the singleton)
-const prisma = new PrismaClient();
+import { db } from '@/lib/db';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -21,7 +18,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
+          const user = await db.user.findUnique({
             where: { email: credentials.email.toLowerCase() },
           });
           if (!user) return null;

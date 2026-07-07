@@ -53,7 +53,9 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
-        {NAV_ITEMS.map(item => {
+        {NAV_ITEMS
+          .filter(item => !item.roles || (authUser && item.roles.includes(authUser.role as 'admin' | 'user')))
+          .map(item => {
           const Icon = item.icon;
           const active = view === item.key;
           const label = t[item.labelKey];

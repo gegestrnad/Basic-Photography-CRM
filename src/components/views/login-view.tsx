@@ -21,35 +21,22 @@ export function LoginView() {
     setError('');
 
     try {
-      const csrfRes = await fetch('/api/auth/csrf');
-      const { csrfToken } = await csrfRes.json();
-
-      const res = await fetch('/api/auth/callback/credentials', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          email,
-          password,
-          csrfToken,
-          callbackUrl: '/',
-          json: 'true',
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
-        if (data.error) {
-          setError('Invalid email or password');
+        // Verify session
+        const sessionRes = await fetch('/api/auth/session');
+        const sessionData = await sessionRes.json();
+        if (sessionData.authenticated) {
+          setAuth(true, sessionData.user);
+          toast.success('Welcome back!');
         } else {
-          // Verify session
-          const sessionRes = await fetch('/api/auth/session');
-          const sessionData = await sessionRes.json();
-          if (sessionData.authenticated) {
-            setAuth(true, sessionData.user);
-            toast.success('Welcome back!');
-          } else {
-            setError('Login failed. Please try again.');
-          }
+          setError('Login failed. Please try again.');
         }
       } else {
         setError('Invalid email or password');

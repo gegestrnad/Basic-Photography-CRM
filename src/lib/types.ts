@@ -145,7 +145,19 @@ export interface Metrics {
 
 /** Top-level navigation views. Drives the active-view state in the Zustand store. */
 export type ViewKey =
-  | 'dashboard' | 'jobs' | 'payments' | 'tasks' | 'wages' | 'clients' | 'settings';
+  | 'dashboard' | 'jobs' | 'payments' | 'tasks' | 'wages' | 'clients' | 'settings' | 'admin';
+
+// ── User (Auth) ──────────────────────────────────────────────────────────────
+export type UserRole = 'admin' | 'user';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // ── Client entity ────────────────────────────────────────────────────────────
 export interface Client {

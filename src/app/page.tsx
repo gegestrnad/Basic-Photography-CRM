@@ -15,6 +15,7 @@ import { TasksView } from '@/components/views/tasks-view';
 import { WagesView } from '@/components/views/wages-view';
 import { ClientsView } from '@/components/views/clients-view';
 import { SettingsView } from '@/components/views/settings-view';
+import { AdminView } from '@/components/views/admin-view';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
@@ -68,6 +69,7 @@ async function checkSession(setAuth: (auth: boolean, user?: any) => void) {
 
 function ActiveView() {
   const view = useAppStore(s => s.view);
+  const authUser = useAppStore(s => s.authUser);
   switch (view) {
     case 'dashboard': return <DashboardView />;
     case 'jobs':      return <JobsView />;
@@ -76,6 +78,10 @@ function ActiveView() {
     case 'wages':     return <WagesView />;
     case 'clients':   return <ClientsView />;
     case 'settings':  return <SettingsView />;
+    case 'admin':
+      // Only render admin view for admin role; otherwise redirect to dashboard
+      if (authUser?.role !== 'admin') return <DashboardView />;
+      return <AdminView />;
     default:          return <DashboardView />;
   }
 }
