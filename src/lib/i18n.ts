@@ -14,6 +14,7 @@ export interface Dict {
   nav_payments: string;
   nav_tasks: string;
   nav_wages: string;
+  nav_clients: string;
   nav_settings: string;
 
   // ── Common ──
@@ -199,6 +200,29 @@ export interface Dict {
   wage_standalone: string;
   wage_base: string;
   wage_staff_count: (n: number) => string;
+
+  // ── Clients ──
+  client_title: string;
+  client_count: (n: number) => string;
+  client_new: string;
+  client_edit: string;
+  client_newDesc: string;
+  client_editDesc: string;
+  client_empty: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
+  client_notes: string;
+  client_jobs: (n: number) => string;
+  client_save: string;
+  client_update: string;
+  client_added: string;
+  client_updated: string;
+  client_deleted: string;
+  client_deleteConfirm: string;
+  client_deleteConfirmDesc: string;
+  client_nameError: string;
+  client_emailError: string;
 
   // ── Settings ──
   set_title: string;
@@ -428,6 +452,29 @@ export const en: Dict = {
   wage_standalone: 'Standalone',
   wage_base: 'Base',
   wage_staff_count: (n) => `${n} staff`,
+
+  // ── Clients ──
+  client_title: 'Clients',
+  client_count: (n) => `${n} client${n !== 1 ? 's' : ''}`,
+  client_new: 'New Client',
+  client_edit: 'Edit Client',
+  client_newDesc: 'Add a new client to your roster',
+  client_editDesc: 'Editing {id}',
+  client_empty: 'No clients yet. Add your first client to start linking them to jobs.',
+  client_name: 'Name',
+  client_phone: 'Phone',
+  client_email: 'Email',
+  client_notes: 'Notes',
+  client_jobs: (n) => `${n} job${n !== 1 ? 's' : ''}`,
+  client_save: 'Save Client',
+  client_update: 'Update Client',
+  client_added: 'Client added',
+  client_updated: 'Client updated',
+  client_deleted: 'Client deleted',
+  client_deleteConfirm: 'Delete this client?',
+  client_deleteConfirmDesc: 'The client will be removed. Linked jobs will keep their client name but lose the connection. This cannot be undone.',
+  client_nameError: 'Name is required',
+  client_emailError: 'Invalid email address',
 
   set_title: 'Settings',
   set_subtitle: 'Manage lists, wage rules, staff, and backups',
@@ -661,6 +708,29 @@ export const id: Dict = {
   wage_standalone: 'Mandiri',
   wage_base: 'Dasar',
   wage_staff_count: (n) => `${n} staf`,
+
+  // ── Clients ──
+  client_title: 'Klien',
+  client_count: (n) => `${n} klien`,
+  client_new: 'Klien Baru',
+  client_edit: 'Edit Klien',
+  client_newDesc: 'Tambah klien baru ke daftar Anda',
+  client_editDesc: 'Mengedit {id}',
+  client_empty: 'Belum ada klien. Tambahkan klien pertama untuk mulai menautkannya ke pekerjaan.',
+  client_name: 'Nama',
+  client_phone: 'Telepon',
+  client_email: 'Email',
+  client_notes: 'Catatan',
+  client_jobs: (n) => `${n} pekerjaan`,
+  client_save: 'Simpan Klien',
+  client_update: 'Perbarui Klien',
+  client_added: 'Klien ditambahkan',
+  client_updated: 'Klien diperbarui',
+  client_deleted: 'Klien dihapus',
+  client_deleteConfirm: 'Hapus klien ini?',
+  client_deleteConfirmDesc: 'Klien akan dihapus. Pekerjaan terkait akan tetap menyimpan nama klien tetapi kehilangan koneksi. Tindakan ini tidak dapat dibatalkan.',
+  client_nameError: 'Nama wajib diisi',
+  client_emailError: 'Alamat email tidak valid',
 
   set_title: 'Pengaturan',
   set_subtitle: 'Kelola daftar, aturan upah, staf, dan cadangan',

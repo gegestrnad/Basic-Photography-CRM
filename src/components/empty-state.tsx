@@ -3,12 +3,12 @@
 import { useAppStore } from '@/lib/store';
 import { useLang } from '@/components/language-provider';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Wallet, CheckSquare, Calculator, FileText, Inbox, Plus } from 'lucide-react';
+import { Briefcase, Wallet, CheckSquare, Calculator, Users, FileText, Inbox, Plus } from 'lucide-react';
 import type { ViewKey } from '@/lib/types';
 
 interface EmptyStateProps {
   /** Which view the empty state is for — drives the illustration + CTA */
-  view: 'jobs' | 'payments' | 'tasks' | 'wages' | 'generic';
+  view: 'jobs' | 'payments' | 'tasks' | 'wages' | 'clients' | 'generic';
   /** Custom message (overrides the default per-view message) */
   message?: string;
   /** Hide the CTA button */
@@ -51,6 +51,13 @@ export function EmptyState({ view, message, hideCta, ctaLabel, onCta }: EmptySta
       cta: null,
       targetView: 'wages' as ViewKey,
       gradient: 'from-amber-500/20 to-orange-500/10',
+    },
+    clients: {
+      icon: Users,
+      defaultMsg: useLang().lang === 'id' ? 'Belum ada klien. Tambahkan klien pertama untuk mulai menautkannya ke pekerjaan.' : 'No clients yet. Add your first client to start linking them to jobs.',
+      cta: t.client_new,
+      targetView: 'clients' as ViewKey,
+      gradient: 'from-cyan-500/20 to-blue-500/10',
     },
     generic: {
       icon: Inbox,

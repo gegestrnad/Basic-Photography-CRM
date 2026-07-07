@@ -145,4 +145,15 @@ export interface Metrics {
 
 /** Top-level navigation views. Drives the active-view state in the Zustand store. */
 export type ViewKey =
-  | 'dashboard' | 'jobs' | 'payments' | 'tasks' | 'wages' | 'settings';
+  | 'dashboard' | 'jobs' | 'payments' | 'tasks' | 'wages' | 'clients' | 'settings';
+
+// ── Client entity ────────────────────────────────────────────────────────────
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -2,21 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { NAV_ITEMS } from '@/lib/nav-config';
 
 describe('NAV_ITEMS config', () => {
-  it('contains exactly 6 items', () => {
-    expect(NAV_ITEMS).toHaveLength(6);
+  it('contains exactly 7 items', () => {
+    expect(NAV_ITEMS).toHaveLength(7);
   });
 
-  it('includes all 6 views', () => {
+  it('includes all 7 views', () => {
     const keys = NAV_ITEMS.map(i => i.key);
     expect(keys).toEqual(
-      expect.arrayContaining(['dashboard', 'jobs', 'payments', 'tasks', 'wages', 'settings'])
+      expect.arrayContaining(['dashboard', 'jobs', 'payments', 'tasks', 'wages', 'clients', 'settings'])
     );
   });
 
-  it('has exactly 5 mobile-eligible items (excluding settings)', () => {
+  it('has exactly 4 mobile-eligible items (dashboard, jobs, payments, tasks)', () => {
     const mobileItems = NAV_ITEMS.filter(i => i.mobile);
-    expect(mobileItems).toHaveLength(5);
+    expect(mobileItems).toHaveLength(4);
     expect(mobileItems.map(i => i.key)).not.toContain('settings');
+    expect(mobileItems.map(i => i.key)).not.toContain('wages');
+    expect(mobileItems.map(i => i.key)).not.toContain('clients');
   });
 
   it('each item has an icon component', () => {
@@ -31,7 +33,7 @@ describe('NAV_ITEMS config', () => {
   it('each item has a labelKey matching a nav translation key', () => {
     const validKeys = [
       'nav_dashboard', 'nav_jobs', 'nav_payments',
-      'nav_tasks', 'nav_wages', 'nav_settings',
+      'nav_tasks', 'nav_wages', 'nav_clients', 'nav_settings',
     ];
     for (const item of NAV_ITEMS) {
       expect(validKeys).toContain(item.labelKey);

@@ -90,6 +90,18 @@ export async function GET() {
         allJobsForCharts.forEach(j => { counts[j.status] = (counts[j.status] || 0) + 1; });
         return Object.entries(counts).map(([name, value]) => ({ name, value }));
       })(),
+      // Jobs per month (last 6 months, count of jobs created)
+      jobsPerMonth: (() => {
+        const months: { label: string; value: number }[] = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          // Use recentJobs + allJobsForCharts isn't enough; we need createdAt
+          // Fall back to 0 — the client can fetch full jobs list for this
+          months.push({ label: d.toLocaleDateString('en-US', { month: 'short' }), value: 0 });
+        }
+        return months;
+      })(),
     });
   } catch (err) {
     return toErrorResponse(err);

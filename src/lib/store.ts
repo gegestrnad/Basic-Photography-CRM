@@ -8,6 +8,11 @@ interface AppState {
   view: ViewKey;
   setView: (v: ViewKey) => void;
 
+  // ── Auth ──
+  isAuthenticated: boolean | null; // null = checking, true = logged in, false = not
+  authUser: { email: string; name: string; role: string } | null;
+  setAuth: (authenticated: boolean, user?: { email: string; name: string; role: string } | null) => void;
+
   // ── Theme ──
   theme: 'dark' | 'light';
   toggleTheme: () => void;
@@ -22,6 +27,11 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   view: 'dashboard',
   setView: (v) => set({ view: v }),
+
+  isAuthenticated: null,
+  authUser: null,
+  setAuth: (authenticated, user = null) =>
+    set({ isAuthenticated: authenticated, authUser: user }),
 
   theme: 'dark',
   toggleTheme: () => {

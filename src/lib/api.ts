@@ -1,7 +1,7 @@
 // Lightweight typed API client for fetching from route handlers
 
 import type {
-  Job, Payment, Task, Staff, WageRule, WageConfig, Lists, Metrics,
+  Job, Payment, Task, Staff, WageRule, WageConfig, Lists, Metrics, Client,
   WageDistribution, WageCalculationResult,
 } from '@/lib/types';
 
@@ -11,11 +11,23 @@ async function fetchJson<T>(url: string, opts?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
   });
   if (!res.ok) {
+    // 401 — session expired or not authenticated; throw a clean error
+    if (res.status === 401) {
+      throw new Error('Authentication required');
+    }
     const err = await res.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(err.error || `${res.status} ${res.statusText}`);
   }
   return res.json() as Promise<T>;
 }
+
+// ── Clients ───────────────────────────────────────────────────
+export const clientsApi = {
+  list: () => fetchJson<{ clients: (Client & { jobCount: number })[] }>('/api/clients').then(r => r.clients),
+  create: (data: Partial<Client>) => fetchJson<{ client: Client }>('/api/clients', { method: 'POST', body: JSON.stringify(data) }).then(r => r.client),
+  update: (id: string, changes: Partial<Client>) => fetchJson<{ client: Client }>(`/api/clients/${id}`, { method: 'PUT', body: JSON.stringify(changes) }).then(r => r.client),
+  remove: (id: string) => fetchJson(`/api/clients/${id}`, { method: 'DELETE' }),
+};
 
 // ── Jobs ──────────────────────────────────────────────────────
 export const jobsApi = {

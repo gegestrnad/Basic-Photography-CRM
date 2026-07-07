@@ -1,6 +1,21 @@
 // Centralized Zod validation schemas for all API endpoints
 import { z } from 'zod';
 
+// ── Clients ───────────────────────────────────────────────────
+export const clientCreateSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  phone: z.string().max(50).optional().nullable().default(''),
+  email: z.string().email('Invalid email').optional().nullable().or(z.literal('')).default(''),
+  notes: z.string().max(5000).optional().nullable().default(''),
+});
+
+export const clientUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  phone: z.string().max(50).optional().nullable(),
+  email: z.string().email().optional().nullable().or(z.literal('')).optional(),
+  notes: z.string().max(5000).optional().nullable(),
+}).strict();
+
 // ── Jobs ──────────────────────────────────────────────────────
 export const jobCreateSchema = z.object({
   client: z.string().trim().min(2, 'Client name must be at least 2 characters').max(200),

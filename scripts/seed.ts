@@ -2,11 +2,25 @@
 // Run: bun run /home/z/my-project/scripts/seed.ts
 
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const db = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database with realistic sample data...');
+
+  // ── Demo User (for auth) ────────────────────────────────────
+  await db.user.deleteMany();
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  await db.user.create({
+    data: {
+      email: 'admin@example.com',
+      name: 'Admin',
+      password: hashedPassword,
+      role: 'admin',
+    },
+  });
+  console.log('  Demo user: admin@example.com / admin123');
 
   // ── List Values ─────────────────────────────────────────────
   const lists: Record<string, string[]> = {
@@ -70,6 +84,25 @@ async function main() {
   await db.task.deleteMany();
   await db.wageDistribution.deleteMany();
   await db.job.deleteMany();
+  await db.client.deleteMany();
+
+  // ── Sample Clients ──────────────────────────────────────────
+  const clients = [
+    { name: 'Isna & Edrika', phone: '0812-1111-2222', email: 'isna@email.com', notes: 'Wedding couple' },
+    { name: 'PT Maju Bersama', phone: '021-555-0101', email: 'events@majubersama.co.id', notes: 'Corporate client — annual events' },
+    { name: 'Anisa Putri', phone: '0813-2222-3333', email: 'anisa.putri@email.com', notes: '' },
+    { name: 'Budi & Wati', phone: '0814-3333-4444', email: 'budi.wati@email.com', notes: 'Wedding couple' },
+    { name: 'Citra Lestari', phone: '0815-4444-5555', email: 'citra.lestari@email.com', notes: 'Returning client' },
+    { name: 'Dewi Saraswati', phone: '0816-5555-6666', email: 'dewi@saraswati-studio.com', notes: 'Product photography — catalog work' },
+    { name: 'Eka Pratama', phone: '0817-6666-7777', email: 'eka.pratama@email.com', notes: '' },
+    { name: 'Fajar Nugroho', phone: '0818-7777-8888', email: 'fajar.n@email.com', notes: 'Wedding couple' },
+  ];
+
+  const clientMap: Record<string, string> = {};
+  for (const c of clients) {
+    const created = await db.client.create({ data: c });
+    clientMap[c.name] = created.id;
+  }
 
   // ── Sample Jobs (realistic mix across all statuses) ─────────
   // Dates computed relative to "now" so the dashboard always has fresh demo state
@@ -78,7 +111,7 @@ async function main() {
 
   const jobs = [
     {
-      id: 'JOB-0001', client: 'Isna & Edrika', phone: '0812-1111-2222',
+      id: 'JOB-0001', client: 'Isna & Edrika', clientId: clientMap['Isna & Edrika'], phone: '0812-1111-2222',
       jobType: 'Wedding', jobDate: daysFromNow(-23),
       location: 'Kantor Camat Sui. Raya', status: 'Editing', paymentStatus: 'PAID',
       totalFee: 1600000, deposit: 1600000, balance: 0,
@@ -87,7 +120,7 @@ async function main() {
       createdAt: daysFromNow(-25),
     },
     {
-      id: 'JOB-0002', client: 'PT Maju Bersama', phone: '021-555-0101',
+      id: 'JOB-0002', client: 'PT Maju Bersama', clientId: clientMap['PT Maju Bersama'], phone: '021-555-0101',
       jobType: 'Company Event', jobDate: daysFromNow(-10),
       location: 'Hotel Grand Ballroom', status: 'Ready', paymentStatus: 'PAID',
       totalFee: 5000000, deposit: 2500000, balance: 0,
@@ -96,7 +129,7 @@ async function main() {
       createdAt: daysFromNow(-15),
     },
     {
-      id: 'JOB-0003', client: 'Anisa Putri', phone: '0813-2222-3333',
+      id: 'JOB-0003', client: 'Anisa Putri', clientId: clientMap['Anisa Putri'], phone: '0813-2222-3333',
       jobType: 'Engagement', jobDate: daysFromNow(5),
       location: 'Taman Kota', status: 'Booked', paymentStatus: 'Deposit-Paid',
       totalFee: 2500000, deposit: 1000000, balance: 1500000,
@@ -105,7 +138,7 @@ async function main() {
       createdAt: daysFromNow(-7),
     },
     {
-      id: 'JOB-0004', client: 'Budi & Wati', phone: '0814-3333-4444',
+      id: 'JOB-0004', client: 'Budi & Wati', clientId: clientMap['Budi & Wati'], phone: '0814-3333-4444',
       jobType: 'Wedding', jobDate: daysFromNow(12),
       location: 'Gedung Serbaguna Harmoni', status: 'Booked', paymentStatus: 'Deposit-Paid',
       totalFee: 8000000, deposit: 3000000, balance: 5000000,
@@ -114,7 +147,7 @@ async function main() {
       createdAt: daysFromNow(-3),
     },
     {
-      id: 'JOB-0005', client: 'Citra Lestari', phone: '0815-4444-5555',
+      id: 'JOB-0005', client: 'Citra Lestari', clientId: clientMap['Citra Lestari'], phone: '0815-4444-5555',
       jobType: 'Portrait', jobDate: daysFromNow(2),
       location: 'Studio', status: 'Inquiry', paymentStatus: 'UNPAID',
       totalFee: 800000, deposit: 0, balance: 800000,
@@ -123,7 +156,7 @@ async function main() {
       createdAt: daysFromNow(-1),
     },
     {
-      id: 'JOB-0006', client: 'Dewi Saraswati', phone: '0816-5555-6666',
+      id: 'JOB-0006', client: 'Dewi Saraswati', clientId: clientMap['Dewi Saraswati'], phone: '0816-5555-6666',
       jobType: 'Product', jobDate: daysFromNow(-30),
       location: 'Client office', status: 'Completed', paymentStatus: 'PAID',
       totalFee: 3500000, deposit: 3500000, balance: 0,
@@ -132,7 +165,7 @@ async function main() {
       createdAt: daysFromNow(-35),
     },
     {
-      id: 'JOB-0007', client: 'Eka Pratama', phone: '0817-6666-7777',
+      id: 'JOB-0007', client: 'Eka Pratama', clientId: clientMap['Eka Pratama'], phone: '0817-6666-7777',
       jobType: 'Family', jobDate: daysFromNow(-5),
       location: 'Pantai Indah', status: 'Delivered', paymentStatus: 'PAID',
       totalFee: 1500000, deposit: 1500000, balance: 0,
@@ -141,7 +174,7 @@ async function main() {
       createdAt: daysFromNow(-12),
     },
     {
-      id: 'JOB-0008', client: 'Fajar Nugroho', phone: '0818-7777-8888',
+      id: 'JOB-0008', client: 'Fajar Nugroho', clientId: clientMap['Fajar Nugroho'], phone: '0818-7777-8888',
       jobType: 'Wedding', jobDate: daysFromNow(-45),
       location: 'Gereja Santa Maria', status: 'Completed', paymentStatus: 'PAID',
       totalFee: 6000000, deposit: 6000000, balance: 0,
@@ -245,7 +278,8 @@ async function main() {
   }
 
   console.log('✅ Seed complete');
-  console.log(`  - ${jobs.length} jobs across all statuses`);
+  console.log(`  - ${clients.length} clients (with phone, email, notes)`);
+  console.log(`  - ${jobs.length} jobs across all statuses (linked to clients)`);
   console.log(`  - ${payments.length} payments (mix of PAID / Deposit-Paid)`);
   console.log(`  - ${tasks.length} tasks (including 1 overdue)`);
   console.log(`  - ${wageDistributions.length} wage distributions`);

@@ -8,17 +8,18 @@ import { PageHeader, SectionTitle } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/empty-state';
+import { WidgetErrorBoundary } from '@/components/error-boundary';
 import {
   MetricsGridSkeleton, QuickLinksSkeleton, ChartSkeleton, RecentJobsSkeleton,
 } from '@/components/skeletons';
 import { formatCurrency, formatDate, jobStatusColor, paymentStatusColor } from '@/lib/format';
 import {
   Briefcase, CalendarClock, Scissors, AlertCircle, CheckSquare, AlertTriangle,
-  Wallet, CheckSquare2, Calculator, ArrowRight, TrendingUp,
+  Wallet, CheckSquare2, Calculator, ArrowRight, TrendingUp, BarChart3, Users,
 } from 'lucide-react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, BarChart, Bar,
 } from 'recharts';
 import type { ViewKey } from '@/lib/types';
 
@@ -32,8 +33,9 @@ export function DashboardView() {
     queryFn: dashboardApi.preview,
   });
 
-  // Secondary: payments list for revenue chart (needed for 6-month trend)
+  // Secondary: payments + jobs lists for chart aggregation
   const { data: payments } = useQuery({ queryKey: ['payments'], queryFn: paymentsApi.list });
+  const { data: allJobs } = useQuery({ queryKey: ['jobs'], queryFn: jobsApi.list });
 
   const today = new Date();
   const todayLabel = today.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -60,6 +62,34 @@ export function DashboardView() {
   })();
 
   const statusDistribution = preview?.statusDistribution || [];
+
+  // ── Jobs per month (last 6 months, by jobDate) ──
+  const jobsPerMonth = (() => {
+    const months: { label: string; value: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' });
+      const value = (allJobs || []).filter(j => {
+        const jd = new Date(j.jobDate);
+        return jd.getFullYear() === d.getFullYear() && jd.getMonth() === d.getMonth();
+      }).length;
+      months.push({ label, value });
+    }
+    return months;
+  })();
+
+  // ── Top clients by revenue (top 5) ──
+  const topClients = (() => {
+    const revenueByClient: Record<string, number> = {};
+    (payments || []).filter(p => p.status === 'PAID').forEach(p => {
+      revenueByClient[p.client] = (revenueByClient[p.client] || 0) + p.amount;
+    });
+    return Object.entries(revenueByClient)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  })();
 
   const STATUS_COLORS: Record<string, string> = {
     'Inquiry':   '#3b82f6',
@@ -96,6 +126,7 @@ export function DashboardView() {
       <PageHeader title={t.dash_title} subtitle={todayLabel} />
 
       {/* ── Metric Cards ── */}
+      <WidgetErrorBoundary label="Metrics">
       {previewLoading ? <MetricsGridSkeleton /> : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {metricCards.map(mc => {
@@ -118,9 +149,11 @@ export function DashboardView() {
           })}
         </div>
       )}
+      </WidgetErrorBoundary>
 
       {/* ── Quick Links ── */}
       <SectionTitle>{t.dash_quickViews}</SectionTitle>
+      <WidgetErrorBoundary label="Quick Views">
       {previewLoading ? <QuickLinksSkeleton /> : (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {quickLinks.map((q, idx) => {
@@ -139,10 +172,12 @@ export function DashboardView() {
           })}
         </div>
       )}
+      </WidgetErrorBoundary>
 
       {/* ── Charts ── */}
       <SectionTitle>{t.dash_analytics}</SectionTitle>
       <div className="grid md:grid-cols-2 gap-4">
+        <WidgetErrorBoundary label={t.dash_revenueChart}>
         {previewLoading ? <ChartSkeleton /> : (
           <Card>
             <CardHeader>
@@ -173,7 +208,9 @@ export function DashboardView() {
             </CardContent>
           </Card>
         )}
+        </WidgetErrorBoundary>
 
+        <WidgetErrorBoundary label={t.dash_statusChart}>
         {previewLoading ? <ChartSkeleton /> : (
           <Card>
             <CardHeader>
@@ -198,6 +235,69 @@ export function DashboardView() {
             </CardContent>
           </Card>
         )}
+        </WidgetErrorBoundary>
+      </div>
+
+      {/* ── Secondary Charts (Jobs per Month + Top Clients) ── */}
+      <div className="grid md:grid-cols-2 gap-4 mt-4">
+        <WidgetErrorBoundary label={lang === 'id' ? 'Pekerjaan per Bulan' : 'Jobs per Month'}>
+        {previewLoading ? <ChartSkeleton /> : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BarChart3 className="size-4 text-primary" />
+                {lang === 'id' ? 'Pekerjaan per Bulan' : 'Jobs per Month'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={jobsPerMonth} margin={{ left: -10, right: 10, top: 5, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.15)" />
+                  <XAxis dataKey="label" stroke="rgba(128,128,128,0.6)" fontSize={11} />
+                  <YAxis stroke="rgba(128,128,128,0.6)" fontSize={11} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ background: 'var(--popover)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                  />
+                  <Bar dataKey="value" fill="#7c6ff0" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+        </WidgetErrorBoundary>
+
+        <WidgetErrorBoundary label={lang === 'id' ? 'Klien Teratas' : 'Top Clients'}>
+        {previewLoading ? <ChartSkeleton /> : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="size-4 text-primary" />
+                {lang === 'id' ? 'Klien Teratas (berdasarkan Pendapatan)' : 'Top Clients (by Revenue)'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {topClients.length === 0 ? (
+                <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">
+                  {lang === 'id' ? 'Belum ada pendapatan' : 'No revenue yet'}
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={topClients} layout="vertical" margin={{ left: 20, right: 20, top: 5, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.15)" />
+                    <XAxis type="number" stroke="rgba(128,128,128,0.6)" fontSize={11} tickFormatter={(v) => v >= 1000000 ? `${(v/1000000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
+                    <YAxis type="category" dataKey="name" stroke="rgba(128,128,128,0.6)" fontSize={11} width={80} />
+                    <Tooltip
+                      contentStyle={{ background: 'var(--popover)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                      formatter={(v: number) => formatCurrency(v)}
+                    />
+                    <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        )}
+        </WidgetErrorBoundary>
       </div>
 
       {/* ── Workflow ── */}
@@ -219,6 +319,7 @@ export function DashboardView() {
 
       {/* ── Recent Jobs ── */}
       <SectionTitle>{t.dash_recentJobs}</SectionTitle>
+      <WidgetErrorBoundary label={t.dash_recentJobs}>
       {previewLoading ? <RecentJobsSkeleton /> : (
         (preview?.recentJobs || []).length === 0 ? (
           <EmptyState view="jobs" />
@@ -249,6 +350,7 @@ export function DashboardView() {
           </div>
         )
       )}
+      </WidgetErrorBoundary>
     </div>
   );
 }
