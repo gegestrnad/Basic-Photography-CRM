@@ -36,6 +36,8 @@ model Job {
   @@index([status])
   @@index([jobDate])
   @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([client])
 }
 
 // ── Payments ────────────────────────────────────────────────────────────────
@@ -57,6 +59,7 @@ model Payment {
   @@index([jobId])
   @@index([status])
   @@index([paymentDate])
+  @@index([createdAt])
 }
 
 // ── Tasks ───────────────────────────────────────────────────────────────────
@@ -75,6 +78,7 @@ model Task {
   @@index([jobId])
   @@index([status])
   @@index([dueDate])
+  @@index([createdAt])
 }
 
 // ── Staff ───────────────────────────────────────────────────────────────────
@@ -88,6 +92,8 @@ model Staff {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
 }
 
 // ── Wage Rules ──────────────────────────────────────────────────────────────
@@ -99,6 +105,8 @@ model WageRule {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([sortOrder])
 }
 
 // ── Wage Config (singleton row) ─────────────────────────────────────────────
@@ -140,4 +148,5 @@ model ListValue {
   sortOrder Int      @default(0)
   @@unique([listKey, value])
   @@index([listKey])
+  @@index([listKey, sortOrder])
 }

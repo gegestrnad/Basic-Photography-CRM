@@ -6,6 +6,8 @@ import { tasksApi, jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
+import { TaskListSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,7 +63,7 @@ export function TasksView() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: tasksApi.list });
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({ queryKey: ['tasks'], queryFn: tasksApi.list });
 
   const filtered = useMemo(() => {
     return tasks
@@ -123,11 +125,8 @@ export function TasksView() {
 
       {/* List */}
       <div className="space-y-2">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-4xl mb-2 opacity-50">✅</div>
-            <p className="text-sm text-muted-foreground">{t.task_empty}</p>
-          </div>
+        {tasksLoading ? <TaskListSkeleton /> : filtered.length === 0 ? (
+          <EmptyState view="tasks" onCta={() => { setEditing(null); setFormOpen(true); }} />
         ) : (
           filtered.map(t => {
             const days = daysFromToday(t.dueDate);

@@ -6,6 +6,8 @@ import { wagesApi, jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader, SectionTitle } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
+import { SummaryCardsSkeleton } from '@/components/skeletons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +31,7 @@ import type { OperationalExpense, WageCalculationResult, WageDistribution } from
 export function WagesView() {
   const qc = useQueryClient();
   const { t, lang } = useLang();
-  const { data: wds = [] } = useQuery({ queryKey: ['wages'], queryFn: wagesApi.list });
+  const { data: wds = [], isLoading: wdsLoading } = useQuery({ queryKey: ['wages'], queryFn: wagesApi.list });
 
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -154,6 +156,7 @@ export function WagesView() {
       <PageHeader title={t.wage_title} subtitle={t.wage_count(wds.length)} />
 
       {/* Summary */}
+      {wdsLoading ? <SummaryCardsSkeleton count={2} /> : (
       <div className="grid grid-cols-2 gap-3 mb-6">
         <Card>
           <CardContent className="p-3 sm:p-4 text-center">
@@ -168,6 +171,7 @@ export function WagesView() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Calculator */}
       <SectionTitle>{t.wage_calculator}</SectionTitle>
@@ -352,11 +356,17 @@ export function WagesView() {
       {/* Saved Distributions */}
       <SectionTitle>{t.wage_savedDistributions}</SectionTitle>
       <div className="space-y-2">
-        {wds.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted-foreground">
-            <div className="text-2xl mb-2 opacity-50">📄</div>
-            <div>{t.wage_noSaved}</div>
+        {wdsLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="p-4 rounded-xl border border-border bg-card">
+                <div className="h-4 w-32 bg-accent animate-pulse rounded mb-2" />
+                <div className="h-3 w-48 bg-accent animate-pulse rounded" />
+              </div>
+            ))}
           </div>
+        ) : wds.length === 0 ? (
+          <EmptyState view="wages" />
         ) : (
           wds.map(w => {
             const job = jobs.find(j => j.id === w.jobId);

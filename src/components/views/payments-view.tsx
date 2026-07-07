@@ -6,6 +6,8 @@ import { paymentsApi, jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
+import { PaymentListSkeleton, SummaryCardsSkeleton } from '@/components/skeletons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +40,7 @@ export function PaymentsView() {
   const [editing, setEditing] = useState<Payment | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: payments = [] } = useQuery({ queryKey: ['payments'], queryFn: paymentsApi.list });
+  const { data: payments = [], isLoading: paymentsLoading } = useQuery({ queryKey: ['payments'], queryFn: paymentsApi.list });
 
   const totalCollected = payments.filter(p => p.status === 'PAID').reduce((s, p) => s + p.amount, 0);
   const pendingCount = payments.filter(p => p.status !== 'PAID' && p.status !== 'Refunded').length;
@@ -71,6 +73,7 @@ export function PaymentsView() {
       />
 
       {/* Summary */}
+      {paymentsLoading ? <SummaryCardsSkeleton count={3} /> : (
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
         <Card>
           <CardContent className="p-3 sm:p-4 text-center">
@@ -91,14 +94,12 @@ export function PaymentsView() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* List */}
       <div className="space-y-2">
-        {payments.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-4xl mb-2 opacity-50">💰</div>
-            <p className="text-sm text-muted-foreground">{t.pay_empty}</p>
-          </div>
+        {paymentsLoading ? <PaymentListSkeleton /> : payments.length === 0 ? (
+          <EmptyState view="payments" onCta={() => { setEditing(null); setFormOpen(true); }} />
         ) : (
           payments.map(p => (
             <button

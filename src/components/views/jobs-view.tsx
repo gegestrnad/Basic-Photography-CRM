@@ -6,6 +6,8 @@ import { jobsApi } from '@/lib/api';
 import { useSettings } from '@/components/settings-provider';
 import { useLang } from '@/components/language-provider';
 import { PageHeader } from '@/components/page-header';
+import { EmptyState } from '@/components/empty-state';
+import { JobListSkeleton } from '@/components/skeletons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,7 +60,7 @@ export function JobsView() {
   const [editing, setEditing] = useState<Job | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: jobs = [] } = useQuery({ queryKey: ['jobs'], queryFn: jobsApi.list });
+  const { data: jobs = [], isLoading: jobsLoading } = useQuery({ queryKey: ['jobs'], queryFn: jobsApi.list });
   const { data: detail } = useQuery({
     queryKey: ['job', detailJobId],
     queryFn: () => jobsApi.get(detailJobId!),
@@ -142,11 +144,8 @@ export function JobsView() {
 
       {/* List */}
       <div className="space-y-2">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-4xl mb-2 opacity-50">📭</div>
-            <p className="text-sm text-muted-foreground">{t.jobs_empty}</p>
-          </div>
+        {jobsLoading ? <JobListSkeleton /> : filtered.length === 0 ? (
+          <EmptyState view="jobs" onCta={() => { setEditing(null); setFormOpen(true); }} />
         ) : (
           filtered.map(job => (
             <button

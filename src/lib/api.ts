@@ -68,6 +68,16 @@ export const metricsApi = {
   get: () => fetchJson<{ metrics: Metrics }>('/api/metrics').then(r => r.metrics),
 };
 
+// ── Dashboard Preview (lightweight, take:5 recent jobs + metrics + charts) ──
+export interface DashboardPreview {
+  recentJobs: Job[];
+  metrics: Metrics;
+  statusDistribution: { name: string; value: number }[];
+}
+export const dashboardApi = {
+  preview: () => fetchJson<DashboardPreview>('/api/dashboard-preview'),
+};
+
 // ── Backup ────────────────────────────────────────────────────
 export const backupApi = {
   export: () => fetch('/api/backup/export').then(r => r.blob()),

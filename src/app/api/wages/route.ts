@@ -1,56 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { generateId, computeWageBreakdown } from '@/lib/format';
+import { generateId } from '@/lib/format';
 import { serialize, parseJson } from '@/lib/serialize';
+import { validate, wageDistributionCreateSchema } from '@/lib/validation';
+import { toErrorResponse, validationError } from '@/lib/api-error';
 import type { WageDistribution, OperationalExpense, WageBreakdownItem } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const wds = await db.wageDistribution.findMany({ orderBy: { createdAt: 'desc' } });
-  return NextResponse.json({
-    wageDistributions: wds.map(w => ({
-      ...serialize(w),
-      breakdown: parseJson<WageBreakdownItem[]>(w.breakdown, []),
-      operationalExpenses: parseJson<OperationalExpense[]>(w.operationalExpenses, []),
-    })) as WageDistribution[],
-  });
+  try {
+    const wds = await db.wageDistribution.findMany({ orderBy: { createdAt: 'desc' } });
+    return NextResponse.json({
+      wageDistributions: wds.map(w => ({
+        ...serialize(w),
+        breakdown: parseJson<WageBreakdownItem[]>(w.breakdown, []),
+        operationalExpenses: parseJson<OperationalExpense[]>(w.operationalExpenses, []),
+      })) as WageDistribution[],
+    });
+  } catch (err) {
+    return toErrorResponse(err);
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  try {
+    const body = await req.json().catch(() => ({}));
+    const v = validate(wageDistributionCreateSchema, body);
+    if (!v.ok) validationError(v.error, v.details);
 
-  // Required: grossAmount, distributableBase, breakdown, operationalExpenses
-  const grossAmount = Number(body.grossAmount) || 0;
-  const distributableBase = Number(body.distributableBase) || 0;
-  if (distributableBase <= 0) {
-    return NextResponse.json({ error: 'Distributable base must be > 0' }, { status: 400 });
+    const data = v.data;
+    const existing = await db.wageDistribution.findMany({ select: { id: true }, take: 1000 });
+    const id = generateId('WD', existing.map(w => w.id));
+
+    const wd = await db.wageDistribution.create({
+      data: {
+        id,
+        jobId: data.jobId || null,
+        grossAmount: data.grossAmount,
+        distributableBase: data.distributableBase,
+        totalPaid: data.totalPaid,
+        breakdown: JSON.stringify(data.breakdown),
+        operationalExpenses: JSON.stringify(data.operationalExpenses),
+        notes: data.notes || '',
+      },
+    });
+
+    return NextResponse.json({
+      wageDistribution: {
+        ...serialize(wd),
+        breakdown: data.breakdown,
+        operationalExpenses: data.operationalExpenses,
+      },
+    });
+  } catch (err) {
+    return toErrorResponse(err);
   }
-  const breakdown: WageBreakdownItem[] = Array.isArray(body.breakdown) ? body.breakdown : [];
-  const operationalExpenses: OperationalExpense[] = Array.isArray(body.operationalExpenses) ? body.operationalExpenses : [];
-
-  const existing = await db.wageDistribution.findMany({ select: { id: true } });
-  const id = generateId('WD', existing.map(w => w.id));
-
-  const wd = await db.wageDistribution.create({
-    data: {
-      id,
-      jobId: body.jobId || null,
-      grossAmount,
-      distributableBase,
-      totalPaid: Number(body.totalPaid) || 0,
-      breakdown: JSON.stringify(breakdown),
-      operationalExpenses: JSON.stringify(operationalExpenses),
-      notes: body.notes || '',
-    },
-  });
-
-  return NextResponse.json({
-    wageDistribution: {
-      ...serialize(wd),
-      breakdown,
-      operationalExpenses,
-    },
-  });
 }
