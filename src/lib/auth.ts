@@ -65,4 +65,41 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // ── Cookie configuration ─────────────────────────────────────────────
+  // Behind a TLS-terminating proxy (Caddy → http://localhost:3000),
+  // NextAuth's auto-detection of `useSecureCookies` looks at `req.url` which
+  // is always http:// on the server side, so it looks for the non-prefixed
+  // cookie name. Browsers on the HTTPS preview URL, however, may save and
+  // send back the `__Secure-` prefixed variant. By pinning the cookie name
+  // explicitly to `next-auth.session-token` (no `__Secure-` prefix) and
+  // disabling the `secure` flag, we ensure the same cookie name is used
+  // regardless of whether the request arrives over HTTP or HTTPS.
+  cookies: {
+    sessionToken: {
+      name: 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+    callbackUrl: {
+      name: 'next-auth.callback-url',
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+    csrfToken: {
+      name: 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false,
+      },
+    },
+  },
 };

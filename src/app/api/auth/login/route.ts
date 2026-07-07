@@ -41,21 +41,20 @@ export async function POST(req: Request) {
       maxAge: 30 * 24 * 60 * 60,
     });
 
-    const response = NextResponse.json({ ok: true, user: { email: user.email, name: user.name } });
+    const response = NextResponse.json({
+      ok: true,
+      user: { email: user.email, name: user.name, role: user.role },
+    });
 
-    // Set the session cookie — both variants for dev and prod
+    // Set the session cookie. The cookie name is pinned to
+    // `next-auth.session-token` (no `__Secure-` prefix) via the NextAuth
+    // `cookies.sessionToken.name` option in `auth.ts`. Using a single, non-prefixed
+    // name with `secure: false` ensures the same cookie is used whether the request
+    // arrives directly over HTTP or through the TLS-terminating Caddy proxy.
     response.cookies.set('next-auth.session-token', jwt, {
       httpOnly: true,
       sameSite: 'lax',
       secure: false,
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60,
-    });
-
-    response.cookies.set('__Secure-next-auth.session-token', jwt, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: true,
       path: '/',
       maxAge: 30 * 24 * 60 * 60,
     });

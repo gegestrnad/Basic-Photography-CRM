@@ -29,17 +29,36 @@ export function LoginView() {
 
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
-        // Verify session
-        const sessionRes = await fetch('/api/auth/session');
-        const sessionData = await sessionRes.json();
-        if (sessionData.authenticated) {
-          setAuth(true, sessionData.user);
+        // Trust the login response directly. The login route sets the session
+        // cookie and returns the user payload — relying on an immediate second
+        // fetch to /api/auth/session is racy (the cookie may not yet be visible
+        // to the next request in some browsers / proxy setups), which previously
+        // surfaced as a spurious "Login failed" error.
+        if (data.ok && data.user) {
+          setAuth(true, data.user);
           toast.success('Welcome back!');
+          // Refresh server-side session state in the background so any
+          // role-dependent UI (sidebar, route guards) is consistent.
+          fetch('/api/auth/session').then(async (r) => {
+            try {
+              const sessionData = await r.json();
+              if (sessionData.authenticated && sessionData.user) {
+                setAuth(true, sessionData.user);
+              }
+            } catch {
+              /* ignore — already authenticated via login response */
+            }
+          }).catch(() => { /* ignore */ });
         } else {
           setError('Login failed. Please try again.');
         }
       } else {
-        setError('Invalid email or password');
+        // 401 = invalid credentials; other errors = generic message
+        if (res.status === 401) {
+          setError('Invalid email or password');
+        } else {
+          setError('Login failed. Please try again.');
+        }
       }
     } catch {
       setError('Login failed. Please try again.');
