@@ -8,16 +8,6 @@ A comprehensive client management system designed for photography businesses. Tr
 ![Prisma](https://img.shields.io/badge/Prisma-6-white?logo=prisma)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## 📸 Screenshots
-
-### Dashboard
-![Dashboard](./download/dashboard-final.png)
-
-### Client Management
-![Clients](./download/clients-view.png)
-
-### Mobile Responsive
-![Mobile Dashboard](./download/dashboard-mobile.png)
 
 ## ✨ Features
 
