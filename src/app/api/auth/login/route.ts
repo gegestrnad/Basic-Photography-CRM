@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { encode } from 'next-auth/jwt';
-import { db } from '../../../../../src/lib/db';
+import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 

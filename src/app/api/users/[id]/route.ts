@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { serialize } from '@/lib/serialize';
 import { validate, userUpdateSchema } from '@/lib/validation';
 import { toErrorResponse, validationError } from '@/lib/api-error';
-import { requireAdmin } from '../route';
+import { requireAdmin } from '@/lib/auth-guard';
 import type { User } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';

@@ -1,11 +1,27 @@
 // Photography Tracker — Prisma Schema
-// Database: SQLite (file-based, deploy-ready)
+//
+// LOCAL DEV: SQLite (default — works out of the box, no external DB needed)
+//   provider = "sqlite"
+//   DATABASE_URL="file:./db/custom.db"
+//
+// PRODUCTION (Vercel, etc.): PostgreSQL (required — Vercel serverless has no
+// persistent filesystem, so SQLite files don't survive between requests)
+//   provider = "postgresql"
+//   DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+//
+// To deploy to Vercel:
+//   1. Change provider below from "sqlite" to "postgresql"
+//   2. Set DATABASE_URL env var on Vercel to your hosted PostgreSQL URL
+//   3. Run `bun run db:push` with the production DATABASE_URL to create tables
+//   4. Run `bun run seed` to populate demo data
+//   See DEPLOY.md for full instructions.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
+  // ── Change this to "postgresql" before deploying to Vercel ──
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }

@@ -1,35 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
 import { serialize } from '@/lib/serialize';
 import { validate, userCreateSchema } from '@/lib/validation';
 import { toErrorResponse, validationError } from '@/lib/api-error';
+import { requireAdmin } from '@/lib/auth-guard';
 import type { User } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-/** Require an authenticated admin user; returns the user record or a 401/403 response. */
-export async function requireAdmin() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return {
-      user: null,
-      response: NextResponse.json({ error: 'Authentication required' }, { status: 401 }),
-    };
-  }
-  // Fetch the live user record so role checks reflect the current DB state
-  const dbUser = await db.user.findUnique({ where: { email: (session.user as any).email } });
-  if (!dbUser || dbUser.role !== 'admin') {
-    return {
-      user: null,
-      response: NextResponse.json({ error: 'Admin access required' }, { status: 403 }),
-    };
-  }
-  return { user: dbUser, response: null };
-}
 
 export async function GET() {
   try {
