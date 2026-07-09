@@ -183,8 +183,7 @@ photography-client-management/
 │   └── db/              # SQLite database file
 ├── public/              # Static assets
 ├── scripts/             # Database scripts
-├── examples/            # Example code
-└── download/            # Screenshots and documentation
+└── examples/            # Example code
 ```
 
 ## 🚢 Deployment
@@ -224,7 +223,3 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## 📞 Support
 
 For issues, questions, or suggestions, please open an issue on GitHub.
-
----
-
-Built with ❤️ for photography professionals
