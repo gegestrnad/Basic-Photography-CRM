@@ -1,1 +1,0 @@
-Photo Client tracker / Management
